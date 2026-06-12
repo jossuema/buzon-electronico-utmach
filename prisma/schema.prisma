@@ -1,0 +1,114 @@
+// Buzón Inteligente UTMACH — esquema de base de datos
+// Documentación: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tipo de aporte que puede enviar la comunidad universitaria.
+enum SubmissionType {
+  QUEJA
+  SUGERENCIA
+  IDEA_PROYECTO
+  INVESTIGACION
+  RECONOCIMIENTO
+  OTRO
+}
+
+// Nivel de prioridad declarado por quien envía el aporte.
+enum Priority {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+model Faculty {
+  id          String              @id @default(cuid())
+  name        String
+  slug        String              @unique
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  careers     Career[]
+  submissions Submission[]
+  formConfigs FormConfiguration[]
+
+  @@map("faculties")
+}
+
+model Career {
+  id          String       @id @default(cuid())
+  facultyId   String
+  faculty     Faculty      @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  submissions Submission[]
+
+  @@unique([facultyId, slug])
+  @@index([facultyId])
+  @@map("careers")
+}
+
+model Tag {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  createdAt   DateTime        @default(now())
+  submissions SubmissionTag[]
+
+  @@map("tags")
+}
+
+model Submission {
+  id           String          @id @default(cuid())
+  type         SubmissionType
+  facultyId    String?
+  faculty      Faculty?        @relation(fields: [facultyId], references: [id])
+  careerId     String?
+  career       Career?         @relation(fields: [careerId], references: [id])
+  title        String
+  description  String
+  priority     Priority        @default(MEDIA)
+  contactEmail String? // opcional → habilita el envío anónimo
+  metadata     Json? // JSONB reservado para futuras integraciones de NLP
+  createdAt    DateTime        @default(now())
+  tags         SubmissionTag[]
+
+  @@index([facultyId])
+  @@index([careerId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("submissions")
+}
+
+// Relación N:M entre Submission y Tag.
+model SubmissionTag {
+  submissionId String
+  tagId        String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([submissionId, tagId])
+  @@index([tagId])
+  @@map("submission_tags")
+}
+
+// Parametriza el formulario por facultad (o global cuando facultyId es null).
+model FormConfiguration {
+  id             String   @id @default(cuid())
+  facultyId      String? // null = configuración global
+  faculty        Faculty? @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  allowAnonymous Boolean  @default(true)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@map("form_configurations")
+}

@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Tipografía institucional UTMACH: Myriad Pro.
+ * Es una fuente con licencia (Adobe). Coloca los archivos en
+ * /public/fonts/ con estos nombres para activarla; si no están, se usa
+ * automáticamente la pila de fallback definida en tailwind.config.ts.
+ */
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/fonts/MyriadPro-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/fonts/MyriadPro-It.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/fonts/MyriadPro-Semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/fonts/MyriadPro-SemiboldIt.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/fonts/MyriadPro-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Myriad Pro";
+  src: url("/fonts/MyriadPro-BoldIt.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 214 60% 16%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 214 60% 16%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 60% 16%;
+
+    /* Identidad UTMACH */
+    /* Pantone 301 EC — azul institucional #005ca2 */
+    --primary: 206 100% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Pantone 2925 EC — azul claro #53aae1 */
+    --secondary: 203 70% 60%;
+    --secondary-foreground: 0 0% 100%;
+
+    --utmach: 206 100% 32%;
+    --utmach-foreground: 0 0% 100%;
+
+    /* Pantone 185 EC — rojo #C2354a (solo para detalles ligeros) */
+    --destructive: 351 57% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --muted: 206 30% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 203 70% 95%;
+    --accent-foreground: 206 100% 25%;
+
+    --border: 206 25% 89%;
+    --input: 206 25% 89%;
+    --ring: 206 100% 32%;
+
+    --radius: 0.6rem;
+  }
+
+  .dark {
+    --background: 214 50% 10%;
+    --foreground: 203 30% 96%;
+    --card: 214 50% 12%;
+    --card-foreground: 203 30% 96%;
+    --popover: 214 50% 12%;
+    --popover-foreground: 203 30% 96%;
+    --primary: 203 70% 55%;
+    --primary-foreground: 214 60% 12%;
+    --secondary: 206 60% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --utmach: 203 70% 55%;
+    --utmach-foreground: 214 60% 12%;
+    --destructive: 351 60% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --muted: 214 40% 18%;
+    --muted-foreground: 206 20% 70%;
+    --accent: 214 40% 18%;
+    --accent-foreground: 203 30% 96%;
+    --border: 214 35% 22%;
+    --input: 214 35% 22%;
+    --ring: 203 70% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
