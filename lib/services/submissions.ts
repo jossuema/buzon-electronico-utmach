@@ -43,6 +43,7 @@ const listSelect = {
   createdAt: true,
   faculty: { select: { name: true } },
   career: { select: { name: true } },
+  campus: { select: { name: true } },
 } satisfies Prisma.SubmissionSelect;
 
 export type SubmissionRow = Prisma.SubmissionGetPayload<{

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { CareerOption, FacultyOption } from "@/lib/types";
+import type { CampusOption, CareerOption, FacultyOption } from "@/lib/types";
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -28,5 +28,19 @@ export function useCareers(facultyId?: string) {
     queryFn: () =>
       fetchJson<CareerOption[]>(`/api/careers?facultyId=${facultyId}`),
     enabled: !!facultyId,
+  });
+}
+
+/**
+ * Campus de una carrera. La query se deshabilita si no hay carrera. Si la
+ * carrera tiene un solo campus, el formulario lo selecciona automáticamente.
+ */
+export function useCampuses(careerId?: string, initialData?: CampusOption[]) {
+  return useQuery({
+    queryKey: ["campuses", careerId],
+    queryFn: () =>
+      fetchJson<CampusOption[]>(`/api/campuses?careerId=${careerId}`),
+    enabled: !!careerId,
+    initialData,
   });
 }

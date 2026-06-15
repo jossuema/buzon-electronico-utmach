@@ -10,7 +10,6 @@ const PHRASE = "Construyendo la universidad del futuro";
 const MARQUEE = "FUTURO · INNOVACIÓN · UTMACH · CONOCIMIENTO · ";
 
 const STORAGE_KEY = "utmach_intro_seen";
-const TOTAL_MS = 2600; // duración total de la apertura
 const EXIT_MS = 500; // duración de la cortina de salida
 
 /**
@@ -48,20 +47,16 @@ export function FormIntro() {
     }
     setShow(true);
 
-    const exitAt = setTimeout(() => setLeaving(true), TOTAL_MS - EXIT_MS);
-    const doneAt = setTimeout(() => setShow(false), TOTAL_MS);
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setLeaving(true);
-        setTimeout(() => setShow(false), EXIT_MS);
-      }
+    // La animación NO se cierra sola: permanece hasta que el usuario haga clic
+    // (o presione una tecla). Solo entonces se oculta.
+    const dismiss = () => {
+      setLeaving(true);
+      setTimeout(() => setShow(false), EXIT_MS);
     };
+    const onKey = () => dismiss();
     window.addEventListener("keydown", onKey);
 
     return () => {
-      clearTimeout(exitAt);
-      clearTimeout(doneAt);
       window.removeEventListener("keydown", onKey);
     };
   }, []);
@@ -98,7 +93,7 @@ export function FormIntro() {
       aria-live="polite"
       aria-label={PHRASE}
       onClick={skip}
-      className={`fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#005ca2] to-[#004a82] px-6 text-center transition-all duration-500 ease-out motion-reduce:hidden ${
+      className={`fixed inset-0 z-[60] flex cursor-pointer flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#005ca2] to-[#004a82] px-6 text-center transition-all duration-500 ease-out motion-reduce:hidden ${
         leaving ? "pointer-events-none scale-[1.05] opacity-0" : "opacity-100"
       }`}
     >
@@ -173,8 +168,9 @@ export function FormIntro() {
         </h2>
       </div>
 
-      <span className="absolute bottom-8 text-[11px] uppercase tracking-[0.22em] text-white/50">
-        Universidad Técnica de Machala
+      <span className="absolute bottom-8 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/60">
+        <span className="inline-block h-2 w-2 animate-ping rounded-full bg-[#67bdec]" />
+        Toca para continuar
       </span>
     </div>
   );

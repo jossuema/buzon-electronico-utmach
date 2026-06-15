@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
@@ -10,9 +10,14 @@ import {
   type CreateSubmissionInput,
 } from "@/lib/validations/submission";
 import { createSubmission } from "@/actions/submissions";
-import { useCareers } from "@/lib/hooks";
+import { useCampuses, useCareers } from "@/lib/hooks";
 import { SUBMISSION_TYPES, SUBMISSION_TYPE_LABELS } from "@/lib/constants";
-import type { CareerOption, FacultyOption, FormParams } from "@/lib/types";
+import type {
+  CampusOption,
+  CareerOption,
+  FacultyOption,
+  FormParams,
+} from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +35,7 @@ import {
 interface Props {
   faculties: FacultyOption[];
   initialCareers: CareerOption[];
+  initialCampuses: CampusOption[];
   params: FormParams;
   allowAnonymous: boolean;
 }
@@ -37,6 +43,7 @@ interface Props {
 export function SubmissionForm({
   faculties,
   initialCareers,
+  initialCampuses,
   params,
   allowAnonymous,
 }: Props) {
@@ -49,6 +56,7 @@ export function SubmissionForm({
     handleSubmit,
     watch,
     setValue,
+    getValues,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateSubmissionInput>({
@@ -57,6 +65,7 @@ export function SubmissionForm({
       type: (params.type as CreateSubmissionInput["type"]) ?? undefined,
       facultyId: params.facultyId ?? null,
       careerId: params.careerId ?? null,
+      campusId: params.campusId ?? null,
       title: "",
       description: "",
       priority: "MEDIA",
@@ -66,6 +75,7 @@ export function SubmissionForm({
   });
 
   const facultyId = watch("facultyId");
+  const careerId = watch("careerId");
   const isAnonymous = watch("isAnonymous");
 
   // Carreras dependientes de la facultad seleccionada. initialCareers precarga
@@ -73,8 +83,30 @@ export function SubmissionForm({
   const { data: careers = initialCareers, isFetching: loadingCareers } =
     useCareers(facultyId ?? undefined);
 
+  // Campus dependientes de la carrera. Solo se muestra el combo si la carrera
+  // tiene MÁS de un campus; con uno solo se asigna automáticamente.
+  const { data: campuses = [], isFetching: loadingCampuses } = useCampuses(
+    careerId ?? undefined,
+    careerId && careerId === params.careerId ? initialCampuses : undefined
+  );
+
+  useEffect(() => {
+    if (loadingCampuses) return;
+    const current = getValues("campusId");
+    if (!careerId) {
+      if (current) setValue("campusId", null);
+    } else if (campuses.length === 1) {
+      if (current !== campuses[0].id) setValue("campusId", campuses[0].id);
+    } else if (campuses.length === 0) {
+      if (current) setValue("campusId", null);
+    } else if (current && !campuses.some((c) => c.id === current)) {
+      setValue("campusId", null);
+    }
+  }, [careerId, campuses, loadingCampuses, getValues, setValue]);
+
   const facultyDisabled = params.readonly && !!params.facultyId;
   const careerDisabled = params.readonly && !!params.careerId;
+  const campusDisabled = params.readonly && !!params.campusId;
 
   async function onSubmit(values: CreateSubmissionInput) {
     setServerError(null);
@@ -151,6 +183,7 @@ export function SubmissionForm({
                       onValueChange={(v) => {
                         field.onChange(v);
                         setValue("careerId", null);
+                        setValue("campusId", null);
                       }}
                     >
                       <SelectTrigger>
@@ -178,7 +211,10 @@ export function SubmissionForm({
                     <Select
                       value={field.value ?? ""}
                       disabled={careerDisabled || !facultyId || loadingCareers}
-                      onValueChange={field.onChange}
+                      onValueChange={(v) => {
+                        field.onChange(v);
+                        setValue("campusId", null);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue
@@ -204,6 +240,35 @@ export function SubmissionForm({
               </Field>
             )}
           </div>
+        )}
+
+        {/* Campus: solo aparece si la carrera se imparte en más de un campus.
+            Con un único campus se asigna automáticamente y no se muestra. */}
+        {careerId && !loadingCampuses && campuses.length > 1 && (
+          <Field label="Campus" error={errors.campusId?.message} required>
+            <Controller
+              control={control}
+              name="campusId"
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? ""}
+                  disabled={campusDisabled}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el campus" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {campuses.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
         )}
 
         {/* Título */}

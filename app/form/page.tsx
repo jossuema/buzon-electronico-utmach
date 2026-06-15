@@ -3,10 +3,18 @@ import { prisma } from "@/lib/prisma";
 import { SiteFooter } from "@/components/site-footer";
 import { SubmissionForm } from "@/components/form/submission-form";
 import { FormIntro } from "@/components/form/form-intro";
-import type { CareerOption, FacultyOption, FormParams } from "@/lib/types";
+import type {
+  CampusOption,
+  CareerOption,
+  FacultyOption,
+  FormParams,
+} from "@/lib/types";
 import { SubmissionType } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Enviar aporte" };
+
+const DEFAULT_DESCRIPTION =
+  "Comparte tus quejas, sugerencias, ideas y reconocimientos. Seguimos construyendo el futuro de la Universidad Técnica de Machala";
 
 // Normaliza un query param que puede venir como string | string[] | undefined.
 function param(v: string | string[] | undefined): string | undefined {
@@ -27,6 +35,7 @@ export default async function FormPage({
 
   const facultySlug = param(sp.faculty);
   const careerSlug = param(sp.career);
+  const campusSlug = param(sp.campus);
   const typeParam = param(sp.type)?.toUpperCase();
 
   // Datos base para los selectores.
@@ -41,10 +50,13 @@ export default async function FormPage({
     }),
   ]);
 
-  // Resuelve los slugs de la URL a IDs reales.
+  // Resuelve los slugs de la URL a IDs reales, respetando la jerarquía
+  // facultad → carrera → campus.
   let facultyId: string | undefined;
   let careerId: string | undefined;
+  let campusId: string | undefined;
   let initialCareers: CareerOption[] = [];
+  let initialCampuses: CampusOption[] = [];
 
   if (facultySlug) {
     const faculty = faculties.find((f) => f.slug === facultySlug);
@@ -57,8 +69,28 @@ export default async function FormPage({
         select: { id: true, name: true, slug: true, facultyId: true },
       });
       initialCareers = careers;
+
       if (careerSlug) {
-        careerId = careers.find((c) => c.slug === careerSlug)?.id;
+        const career = careers.find((c) => c.slug === careerSlug);
+        careerId = career?.id;
+
+        if (careerId) {
+          // Campus de la carrera seleccionada.
+          const links = await prisma.careerCampus.findMany({
+            where: { careerId, campus: { active: true } },
+            orderBy: { campus: { name: "asc" } },
+            select: { campus: { select: { id: true, name: true, slug: true } } },
+          });
+          initialCampuses = links.map((l) => l.campus);
+
+          if (initialCampuses.length === 1) {
+            // Un solo campus → se asigna automáticamente (no se muestra combo).
+            campusId = initialCampuses[0].id;
+          } else if (campusSlug) {
+            // Varios campus → solo se acepta uno que pertenezca a la carrera.
+            campusId = initialCampuses.find((c) => c.slug === campusSlug)?.id;
+          }
+        }
       }
     }
   }
@@ -71,6 +103,7 @@ export default async function FormPage({
   const params: FormParams = {
     facultyId,
     careerId,
+    campusId,
     hideFaculty: isTruthy(param(sp.hideFaculty)),
     hideCareer: isTruthy(param(sp.hideCareer)),
     readonly: isTruthy(param(sp.readonly)),
@@ -106,13 +139,13 @@ export default async function FormPage({
               {globalConfig?.title ?? "Buzón Inteligente UTMACH"}
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-pretty text-white/90">
-              {globalConfig?.description ??
-                "Comparte tu aporte con la Universidad Técnica de Machala."}
+              {globalConfig?.description ?? DEFAULT_DESCRIPTION}
             </p>
           </div>
           <SubmissionForm
             faculties={faculties as FacultyOption[]}
             initialCareers={initialCareers}
+            initialCampuses={initialCampuses}
             params={params}
             allowAnonymous={globalConfig?.allowAnonymous ?? true}
           />

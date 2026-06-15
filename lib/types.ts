@@ -13,10 +13,17 @@ export interface CareerOption {
   facultyId: string;
 }
 
+export interface CampusOption {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 // Parámetros de personalización del formulario vía URL.
 export interface FormParams {
   facultyId?: string;
   careerId?: string;
+  campusId?: string;
   hideFaculty: boolean;
   hideCareer: boolean;
   readonly: boolean;

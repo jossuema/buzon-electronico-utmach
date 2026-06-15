@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
     "Prioridad",
     "Facultad",
     "Carrera",
+    "Campus",
     "Correo de contacto",
   ];
 
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest) {
       PRIORITY_LABELS[r.priority],
       r.faculty?.name ?? "",
       r.career?.name ?? "",
+      r.campus?.name ?? "",
       r.contactEmail ?? "",
     ]
       .map(csvCell)

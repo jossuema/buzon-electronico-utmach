@@ -9,6 +9,7 @@ export const createSubmissionSchema = z.object({
   }),
   facultyId: z.string().cuid().optional().nullable(),
   careerId: z.string().cuid().optional().nullable(),
+  campusId: z.string().cuid().optional().nullable(),
   title: z
     .string()
     .trim()

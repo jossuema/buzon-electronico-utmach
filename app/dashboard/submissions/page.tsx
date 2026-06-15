@@ -75,6 +75,7 @@ export default async function SubmissionsPage({
               <TableHead>Título</TableHead>
               <TableHead>Facultad</TableHead>
               <TableHead>Carrera</TableHead>
+              <TableHead>Campus</TableHead>
               <TableHead>Prioridad</TableHead>
             </TableRow>
           </TableHeader>
@@ -82,7 +83,7 @@ export default async function SubmissionsPage({
             {data.rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-10 text-center text-muted-foreground"
                 >
                   No hay aportes que coincidan con los filtros.
@@ -107,6 +108,9 @@ export default async function SubmissionsPage({
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {r.career?.name ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {r.campus?.name ?? "—"}
                   </TableCell>
                   <TableCell>
                     <span

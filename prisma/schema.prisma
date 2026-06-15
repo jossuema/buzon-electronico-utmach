@@ -42,18 +42,44 @@ model Faculty {
 }
 
 model Career {
-  id          String       @id @default(cuid())
+  id          String         @id @default(cuid())
   facultyId   String
-  faculty     Faculty      @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  faculty     Faculty        @relation(fields: [facultyId], references: [id], onDelete: Cascade)
   name        String
   slug        String
-  active      Boolean      @default(true)
-  createdAt   DateTime     @default(now())
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
   submissions Submission[]
+  campuses    CareerCampus[]
 
   @@unique([facultyId, slug])
   @@index([facultyId])
   @@map("careers")
+}
+
+// Sede física donde se imparten carreras. Una carrera puede estar en varios.
+model Campus {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  slug        String         @unique
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  careers     CareerCampus[]
+  submissions Submission[]
+
+  @@map("campuses")
+}
+
+// Relación N:M entre Career y Campus.
+model CareerCampus {
+  careerId String
+  campusId String
+  career   Career @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, campusId])
+  @@index([campusId])
+  @@map("career_campuses")
 }
 
 model Tag {
@@ -72,6 +98,8 @@ model Submission {
   faculty      Faculty?        @relation(fields: [facultyId], references: [id])
   careerId     String?
   career       Career?         @relation(fields: [careerId], references: [id])
+  campusId     String?
+  campus       Campus?         @relation(fields: [campusId], references: [id])
   title        String
   description  String
   priority     Priority        @default(MEDIA)
@@ -82,6 +110,7 @@ model Submission {
 
   @@index([facultyId])
   @@index([careerId])
+  @@index([campusId])
   @@index([type])
   @@index([createdAt])
   @@map("submissions")
