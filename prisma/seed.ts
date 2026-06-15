@@ -22,10 +22,10 @@ const FACULTIES: { name: string; careers: string[] }[] = [
   {
     name: "Facultad de Ciencias Agropecuarias",
     careers: [
-      "Ingeniería Acuícola",
-      "Economía Agropecuaria",
-      "Ingeniería Agronómica",
-      "Medicina Veterinaria y Zootecnia",
+      "Acuicultura",
+      "Agronomía",
+      "Medicina Veterinaria",
+      "Agropecuaria",
     ],
   },
   {
@@ -33,10 +33,12 @@ const FACULTIES: { name: string; careers: string[] }[] = [
     careers: [
       "Administración de Empresas",
       "Administración de Hotelería y Turismo",
-      "Marketing",
+      "Mercadotecnia",
       "Contabilidad y Auditoría",
       "Economía",
-      "Comercio Internacional",
+      "Comercio Exterior",
+      "Finanzas y Negocios Digitales",
+      "Gestión de la Innovación Organizacional y Productividad",
     ],
   },
   {
@@ -49,7 +51,6 @@ const FACULTIES: { name: string; careers: string[] }[] = [
       "Educación Inicial",
       "Pedagogía de los Idiomas Nacionales y Extranjeros",
       "Psicopedagogía",
-      "Psicología Clínica",
       "Comunicación",
       "Derecho",
       "Sociología",
@@ -101,6 +102,29 @@ async function main() {
         },
       });
     }
+
+    // Elimina carreras obsoletas de esta facultad (las que ya no están en la
+    // lista) siempre que no tengan aportes asociados. Hace el seed autoritativo.
+    const validSlugs = new Set(faculty.careers.map(slugify));
+    const existing = await prisma.career.findMany({
+      where: { facultyId: createdFaculty.id },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        _count: { select: { submissions: true } },
+      },
+    });
+    for (const c of existing) {
+      if (validSlugs.has(c.slug)) continue;
+      if (c._count.submissions > 0) {
+        console.log(`    ! "${c.name}" tiene aportes; no se elimina`);
+        continue;
+      }
+      await prisma.career.delete({ where: { id: c.id } });
+      console.log(`    − carrera obsoleta eliminada: ${c.name}`);
+    }
+
     console.log(`  ✓ ${faculty.name} (${faculty.careers.length} carreras)`);
   }
 
@@ -114,7 +138,7 @@ async function main() {
         facultyId: null,
         title: "Buzón Inteligente UTMACH",
         description:
-          "Comparte tus quejas, sugerencias, ideas y reconocimientos con la Universidad Técnica de Machala.",
+          "Comparte tus quejas, sugerencias, ideas y reconocimientos. Seguimos construyendo el futuro de la Universidad Técnica de Machala.",
         allowAnonymous: true,
         active: true,
       },
