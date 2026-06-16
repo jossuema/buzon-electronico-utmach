@@ -28,6 +28,8 @@ export const createSubmissionSchema = z.object({
     .optional()
     .or(z.literal("")),
   isAnonymous: z.boolean().default(false),
+  // Honeypot anti-bot: campo oculto que un humano nunca debe llenar.
+  website: z.string().optional(),
 });
 
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;

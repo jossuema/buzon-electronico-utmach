@@ -71,6 +71,7 @@ export function SubmissionForm({
       priority: "MEDIA",
       contactEmail: "",
       isAnonymous: false,
+      website: "", // honeypot
     },
   });
 
@@ -146,6 +147,21 @@ export function SubmissionForm({
       <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-primary" />
 
       <div className="space-y-6 p-6 sm:p-8">
+        {/* Honeypot anti-bot: oculto a personas, los bots lo llenan. */}
+        <div
+          aria-hidden="true"
+          className="absolute left-[-9999px] top-[-9999px] h-0 w-0 overflow-hidden"
+        >
+          <label htmlFor="website">No llenar este campo</label>
+          <input
+            id="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            {...register("website")}
+          />
+        </div>
+
         {/* Tipo de aporte */}
         <Field label="Tipo de aporte" error={errors.type?.message} required>
           <Controller

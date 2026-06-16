@@ -7,9 +7,12 @@ import {
   SUBMISSION_TYPE_LABELS,
 } from "@/lib/constants";
 
-// Escapa un valor para CSV (comillas y separadores).
+// Escapa un valor para CSV (comillas y separadores) y neutraliza la inyección
+// de fórmulas: si el texto empieza con un carácter peligroso (= + - @ TAB CR),
+// se antepone un apóstrofo para que Excel/Sheets lo trate como texto.
 function csvCell(value: unknown): string {
-  const s = value == null ? "" : String(value);
+  let s = value == null ? "" : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   if (/[",\n;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }

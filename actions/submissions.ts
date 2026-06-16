@@ -5,6 +5,8 @@ import {
   createSubmissionSchema,
   type CreateSubmissionInput,
 } from "@/lib/validations/submission";
+import { getClientIp } from "@/lib/request";
+import { rateLimit } from "@/lib/rate-limit";
 
 export type SubmissionActionResult =
   | { ok: true; id: string }
@@ -24,6 +26,23 @@ export async function createSubmission(
   }
 
   const data = parsed.data;
+
+  // Honeypot: si el campo oculto viene lleno, es un bot. Fingimos éxito para
+  // no darle pistas (no se guarda nada).
+  if (data.website && data.website.trim() !== "") {
+    return { ok: true, id: "ok" };
+  }
+
+  // Rate limit por IP: máximo 5 aportes cada 10 minutos.
+  const ip = await getClientIp();
+  const rl = rateLimit(`submit:${ip}`, 5, 10 * 60 * 1000);
+  if (!rl.success) {
+    const mins = Math.ceil(rl.retryAfterMs / 60000);
+    return {
+      ok: false,
+      error: `Has enviado demasiados aportes. Intenta de nuevo en ${mins} minuto${mins === 1 ? "" : "s"}.`,
+    };
+  }
 
   // Si el envío es anónimo, se descarta el correo de contacto.
   const contactEmail =
