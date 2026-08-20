@@ -1,55 +1,43 @@
 name: Deploy to Azure
 
-# Despliega a Azure App Service (Web App for Containers) cuando hay push a main.
-# Construye la imagen en Azure Container Registry y actualiza la Web App.
+# Despliegue continuo a Azure App Service (Web App for Containers).
+#
+# En "Azure for Students" no se puede usar OIDC (app registration bloqueada por
+# el tenant) ni ACR Tasks. Por eso este workflow solo construye la imagen con
+# Docker en el runner (amd64) y la sube al ACR con credenciales de admin; la Web
+# App tiene "continuous deployment" habilitado + un webhook del ACR, así que se
+# auto-actualiza al detectar el push de la etiqueta :latest.
+#
 # Las migraciones de Prisma se ejecutan al iniciar el contenedor (ver Dockerfile).
+#
+# Secrets requeridos (Settings → Secrets and variables → Actions):
+#   ACR_LOGIN_SERVER  (p. ej. acrbuzonXXXX.azurecr.io)
+#   ACR_USERNAME
+#   ACR_PASSWORD
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  id-token: write # requerido para el login OIDC con Azure
-  contents: read
-
 env:
   IMAGE_NAME: buzon-utmach
 
 jobs:
   deploy:
-    name: Build & deploy
+    name: Build & push
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Login en Azure (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Login al Container Registry
+        run: echo "${{ secrets.ACR_PASSWORD }}" | docker login "${{ secrets.ACR_LOGIN_SERVER }}" -u "${{ secrets.ACR_USERNAME }}" --password-stdin
 
-      - name: Construir imagen en ACR
+      - name: Build & push de la imagen
         run: |
-          az acr build \
-            --registry "${{ vars.AZURE_ACR_NAME }}" \
-            --image "${IMAGE_NAME}:${{ github.sha }}" \
-            --image "${IMAGE_NAME}:latest" \
-            .
-
-      - name: Actualizar Web App con la nueva imagen
-        run: |
-          az webapp config container set \
-            --name "${{ vars.AZURE_WEBAPP_NAME }}" \
-            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --container-image-name "${{ vars.AZURE_ACR_NAME }}.azurecr.io/${IMAGE_NAME}:${{ github.sha }}"
-
-      - name: Reiniciar Web App
-        run: |
-          az webapp restart \
-            --name "${{ vars.AZURE_WEBAPP_NAME }}" \
-            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}"
+          IMG="${{ secrets.ACR_LOGIN_SERVER }}/${IMAGE_NAME}"
+          docker build -t "$IMG:latest" .
+          docker push "$IMG:latest"
+          echo "Imagen publicada. App Service se actualizará vía el webhook del ACR."
