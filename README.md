@@ -170,7 +170,32 @@ Ver [`.env.example`](.env.example):
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Credenciales que usa Docker Compose |
 | `AUTH_SECRET` | Secreto de Auth.js (`openssl rand -base64 32`) |
 | `AUTH_URL` | URL base de la app |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Credenciales del administrador del panel |
+| `ADMIN_EMAIL` | Correo del administrador del panel |
+| `ADMIN_PASSWORD_HASH` | **Hash bcrypt** de la clave del admin (producción) |
+| `ADMIN_PASSWORD` | Clave en texto plano — solo respaldo para desarrollo local |
+
+Genera el hash con:
+
+```bash
+node -e "console.log(require('bcryptjs').hashSync('TU_CLAVE',10))"
+```
+
+---
+
+## 🔒 Medidas de seguridad implementadas
+
+| Medida | Detalle |
+|---|---|
+| **Cabeceras HTTP** | CSP (`frame-ancestors 'none'`, `object-src 'none'`), HSTS, `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`; sin `X-Powered-By` ([next.config.mjs](next.config.mjs)) |
+| **Contraseña admin** | Comparada con **bcrypt** (`ADMIN_PASSWORD_HASH`), nunca en texto plano en producción |
+| **Anti fuerza bruta** | Rate limit en el login: 8 intentos / 15 min por IP |
+| **Anti spam** | Rate limit del formulario (5 aportes / 10 min por IP) + honeypot oculto |
+| **Dashboard** | Protegido por middleware **y** revalidación de sesión server-side (defensa en profundidad) |
+| **CSV** | Neutraliza inyección de fórmulas (`= + - @`) en la exportación |
+| **Base de datos** | TLS obligatorio (`sslmode=require`) y firewall restringido a las IP de salida del App Service |
+
+> Pendiente a futuro: SSO institucional + MFA, secretos en Azure Key Vault, y
+> auditoría de accesos administrativos.
 
 ---
 
