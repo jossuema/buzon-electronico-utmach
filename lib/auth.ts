@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { authConfig } from "./auth.config";
 
 // Esquema de las credenciales de acceso al dashboard.
 const credentialsSchema = z.object({
@@ -9,13 +11,13 @@ const credentialsSchema = z.object({
 });
 
 /**
- * Autenticación simple basada en un único administrador definido por
- * variables de entorno (ADMIN_EMAIL / ADMIN_PASSWORD). Suficiente para el
- * alcance institucional; puede migrarse a SSO de la UTMACH más adelante.
+ * Autenticación simple basada en un único administrador definido por variables
+ * de entorno. En producción se compara contra un hash bcrypt
+ * (ADMIN_PASSWORD_HASH); el texto plano (ADMIN_PASSWORD) solo es respaldo para
+ * desarrollo local. Puede migrarse a SSO de la UTMACH más adelante.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -28,17 +30,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { email, password } = parsed.data;
         const adminEmail = process.env.ADMIN_EMAIL;
-        const adminPassword = process.env.ADMIN_PASSWORD;
+        const adminHash = process.env.ADMIN_PASSWORD_HASH;
+        const adminPlain = process.env.ADMIN_PASSWORD;
 
-        if (!adminEmail || !adminPassword) {
-          console.error("ADMIN_EMAIL/ADMIN_PASSWORD no configurados");
+        if (!adminEmail || (!adminHash && !adminPlain)) {
+          console.error(
+            "Falta configurar ADMIN_EMAIL y ADMIN_PASSWORD_HASH (o ADMIN_PASSWORD)"
+          );
           return null;
         }
 
-        if (
-          email.toLowerCase() === adminEmail.toLowerCase() &&
-          password === adminPassword
-        ) {
+        const emailOk = email.toLowerCase() === adminEmail.toLowerCase();
+        const passwordOk = adminHash
+          ? await bcrypt.compare(password, adminHash)
+          : password === adminPlain;
+
+        if (emailOk && passwordOk) {
           return {
             id: "admin",
             name: "Administrador UTMACH",
@@ -50,16 +57,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) token.role = (user as { role?: string }).role ?? "admin";
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        (session.user as { role?: string }).role = token.role as string;
-      }
-      return session;
-    },
-  },
 });
