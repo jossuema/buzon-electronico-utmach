@@ -1,0 +1,29 @@
+name: Retención de datos
+
+# Aplica la política de retención (anonimiza los correos de contacto que
+# superan el periodo permitido) llamando al endpoint protegido de la app.
+#
+# Secrets requeridos:
+#   APP_URL          URL pública de la app (p. ej. https://buzon-utmach.azurewebsites.net)
+#   RETENTION_TOKEN  el mismo valor configurado en la App Setting RETENTION_TOKEN
+
+on:
+  schedule:
+    - cron: "0 6 1 * *" # el día 1 de cada mes, 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  purge:
+    name: Anonimizar correos vencidos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar al endpoint de retención
+        run: |
+          RESP=$(curl -sS -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.RETENTION_TOKEN }}" \
+            "${{ secrets.APP_URL }}/api/retention/purge")
+          BODY=$(echo "$RESP" | head -n -1)
+          CODE=$(echo "$RESP" | tail -n 1)
+          echo "HTTP $CODE"
+          echo "$BODY"
+          [ "$CODE" = "200" ] || exit 1

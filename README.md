@@ -199,6 +199,30 @@ node -e "console.log(require('bcryptjs').hashSync('TU_CLAVE',10))"
 
 ---
 
+## 🛡️ Privacidad y retención de datos
+
+- **Aviso de privacidad** público en [`/privacidad`](app/privacidad/page.tsx),
+  enlazado desde el pie de página y desde el propio formulario.
+- **Minimización de datos**: el único dato personal es el **correo de contacto**,
+  y es *opcional* (el envío anónimo no lo guarda).
+- **Retención**: el correo se elimina automáticamente a los
+  **12 meses** ([`lib/privacy.ts`](lib/privacy.ts)); el aporte se conserva de
+  forma anónima para estadísticas.
+- **Ejecución de la purga**:
+  - Automática: workflow mensual [`retention.yml`](.github/workflows/retention.yml)
+    que llama a `POST /api/retention/purge` (protegido con `RETENTION_TOKEN`).
+  - Manual: `npm run privacy:purge` (usa `DATABASE_URL`).
+
+| Variable | Descripción |
+|---|---|
+| `RETENTION_TOKEN` | Token para autorizar la purga programada (App Setting + secret de GitHub) |
+
+> ⚠️ El texto del aviso es una **plantilla técnica**: antes de publicarlo de
+> forma oficial debe revisarlo el área legal / de protección de datos de la
+> UTMACH y confirmarse el correo de contacto para derechos ARCO.
+
+---
+
 ## ☁️ Despliegue y CI/CD (Azure + GitHub Actions)
 
 El proyecto está listo para CI/CD continuo hacia **Azure**:

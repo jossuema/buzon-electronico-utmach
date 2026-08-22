@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
@@ -12,6 +13,7 @@ import {
 import { createSubmission } from "@/actions/submissions";
 import { useCampuses, useCareers } from "@/lib/hooks";
 import { SUBMISSION_TYPES, SUBMISSION_TYPE_LABELS } from "@/lib/constants";
+import { CONTACT_EMAIL_RETENTION_MONTHS } from "@/lib/privacy";
 import type {
   CampusOption,
   CareerOption,
@@ -338,6 +340,11 @@ export function SubmissionForm({
               placeholder="tu.correo@utmachala.edu.ec"
               {...register("contactEmail")}
             />
+            <p className="text-xs text-muted-foreground">
+              Solo se usa para responderte sobre este aporte y se elimina
+              automáticamente a los {CONTACT_EMAIL_RETENTION_MONTHS} meses.
+              Déjalo vacío si prefieres no ser contactado.
+            </p>
           </Field>
         )}
 
@@ -346,6 +353,18 @@ export function SubmissionForm({
             {serverError}
           </p>
         )}
+
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Al enviar aceptas el tratamiento de los datos de este formulario según
+          el{" "}
+          <Link
+            href="/privacidad"
+            className="font-medium text-primary underline underline-offset-2"
+          >
+            aviso de privacidad
+          </Link>
+          . No incluyas datos personales de terceros en la descripción.
+        </p>
 
         <Button
           type="submit"
