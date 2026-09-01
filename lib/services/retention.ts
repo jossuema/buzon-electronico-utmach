@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { retentionCutoffDate } from "@/lib/privacy";
+import { purgeExpiredGuards } from "@/lib/guard";
 
 export interface PurgeResult {
   cutoff: string;
   anonymized: number;
+  guardsDeleted: number;
 }
 
 /**
@@ -24,5 +26,12 @@ export async function purgeExpiredContactEmails(
     data: { contactEmail: null },
   });
 
-  return { cutoff: cutoff.toISOString(), anonymized: count };
+  // Además se borran los registros antiabuso vencidos (30 días).
+  const guards = await purgeExpiredGuards(now);
+
+  return {
+    cutoff: cutoff.toISOString(),
+    anonymized: count,
+    guardsDeleted: guards.deleted,
+  };
 }

@@ -8,6 +8,8 @@ import {
 import { getClientIp } from "@/lib/request";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveCampus } from "@/lib/hierarchy";
+import { checkEcuadorOnly } from "@/lib/geo";
+import { checkSubmissionGuards, recordSubmission } from "@/lib/guard";
 
 export type SubmissionActionResult =
   | { ok: true; id: string }
@@ -34,15 +36,31 @@ export async function createSubmission(
     return { ok: true, id: "ok" };
   }
 
-  // Rate limit por IP: máximo 5 aportes cada 10 minutos.
   const ip = await getClientIp();
-  const rl = rateLimit(`submit:${ip}`, 5, 10 * 60 * 1000);
-  if (!rl.success) {
-    const mins = Math.ceil(rl.retryAfterMs / 60000);
+
+  // Cortafuegos rápido en memoria (barato, frena ráfagas antes de tocar la BD).
+  const burst = rateLimit(`submit:${ip}`, 10, 10 * 60 * 1000);
+  if (!burst.success) {
     return {
       ok: false,
-      error: `Has enviado demasiados aportes. Intenta de nuevo en ${mins} minuto${mins === 1 ? "" : "s"}.`,
+      error: "Demasiados envíos seguidos. Intenta de nuevo en unos minutos.",
     };
+  }
+
+  // Solo se aceptan envíos desde Ecuador. Si la IP no se puede determinar
+  // (red local, proxy raro) NO se bloquea: es peor rechazar a un estudiante
+  // real que aceptar un envío dudoso.
+  if (checkEcuadorOnly(ip) === "block") {
+    return {
+      ok: false,
+      error: "Este buzón solo admite envíos desde Ecuador.",
+    };
+  }
+
+  // Límites persistentes por dispositivo, red y contenido duplicado.
+  const guard = await checkSubmissionGuards(ip, data.description);
+  if (!guard.ok) {
+    return { ok: false, error: guard.reason };
   }
 
   // Si el envío es anónimo, se descarta el correo de contacto.
@@ -95,6 +113,13 @@ export async function createSubmission(
         metadata: { source: "web-form", anonymous: data.isAnonymous },
       },
       select: { id: true },
+    });
+
+    // Solo cuenta para los límites si el aporte se guardó de verdad.
+    await recordSubmission({
+      deviceHash: guard.deviceHash,
+      ipHash: guard.ipHash,
+      contentHash: guard.contentHash,
     });
 
     return { ok: true, id: submission.id };

@@ -17,7 +17,8 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "qr": "node scripts/generate-qr.mjs",
-    "privacy:purge": "tsx scripts/purge-retention.ts"
+    "privacy:purge": "tsx scripts/purge-retention.ts",
+    "geo:update": "node scripts/generate-geo-ec.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

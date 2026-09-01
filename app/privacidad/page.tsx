@@ -115,9 +115,19 @@ export default function PrivacyPage() {
                 </ul>
                 <p>
                   No solicitamos tu nombre, cédula, teléfono ni matrícula. No
-                  usamos cookies de publicidad ni de seguimiento de terceros; la
-                  única cookie que existe es la de sesión del personal
-                  administrativo cuando inicia sesión en el panel.
+                  usamos cookies de publicidad ni de seguimiento de terceros.
+                </p>
+                <p className="rounded-md bg-muted/60 p-3">
+                  <strong>Datos técnicos de seguridad.</strong> Para evitar el
+                  uso abusivo del buzón (envíos masivos automatizados) se guarda
+                  una <strong>huella irreversible</strong> de tu dirección IP y
+                  de un identificador aleatorio de tu navegador, junto con una
+                  huella del texto enviado para detectar duplicados. No se
+                  almacena tu IP en claro y esas huellas{" "}
+                  <strong>no permiten reconstruir</strong> el dato original ni
+                  identificarte. Se eliminan a los <strong>30 días</strong>.
+                  Además, los envíos solo se aceptan desde direcciones de
+                  Ecuador.
                 </p>
                 <p className="rounded-md bg-muted/60 p-3">
                   <strong>Importante:</strong> evita incluir datos personales

@@ -127,6 +127,22 @@ model SubmissionTag {
   @@map("submission_tags")
 }
 
+// Registro antiabuso de los envíos. NO guarda IPs ni identificadores en claro:
+// solo hashes HMAC (irreversibles sin el secreto del servidor). Se purga a los
+// 30 días junto con el resto de la política de retención.
+model SubmissionGuard {
+  id          String   @id @default(cuid())
+  deviceHash  String // cookie de dispositivo, seudonimizada
+  ipHash      String // IP, seudonimizada
+  contentHash String // texto del aporte, para detectar duplicados
+  createdAt   DateTime @default(now())
+
+  @@index([deviceHash, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([contentHash, createdAt])
+  @@map("submission_guards")
+}
+
 // Parametriza el formulario por facultad (o global cuando facultyId es null).
 model FormConfiguration {
   id             String   @id @default(cuid())
