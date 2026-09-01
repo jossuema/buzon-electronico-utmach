@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Anton } from "next/font/google";
 
 // Fuente display agresiva y rellena para la apertura.
@@ -21,12 +21,18 @@ const EXIT_MS = 500; // duración de la cortina de salida
  * - Se muestra en CADA carga de la página; se cierra con un toque o una tecla.
  * - Con prefers-reduced-motion sigue apareciendo, pero sin movimiento.
  */
-export function FormIntro() {
+export function FormIntro({ hasLogo = false }: { hasLogo?: boolean }) {
   // Arranca visible (también en SSR) para que cubra la página desde el
   // primer pintado, sin que el formulario asome antes de la hidratación.
   const [show, setShow] = useState(true);
   const [leaving, setLeaving] = useState(false);
-  const [logoOk, setLogoOk] = useState(true);
+  const [logoOk, setLogoOk] = useState(hasLogo);
+
+  // Refuerzo: si la imagen ya falló antes de hidratar, onError no llega a
+  // dispararse, así que se comprueba el estado real del elemento.
+  const logoRef = useCallback((node: HTMLImageElement | null) => {
+    if (node && node.complete && node.naturalWidth === 0) setLogoOk(false);
+  }, []);
 
   useEffect(() => {
     // La animación NO se cierra sola: permanece hasta que el usuario haga clic
@@ -111,6 +117,7 @@ export function FormIntro() {
           <div className="motion-safe:animate-intro-rise rounded-xl bg-white px-4 py-2 shadow-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              ref={logoRef}
               src="/utmach-logo.png"
               alt="Universidad Técnica de Machala"
               className="h-9 w-auto sm:h-10"

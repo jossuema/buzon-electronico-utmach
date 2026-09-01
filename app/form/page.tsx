@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { SiteFooter } from "@/components/site-footer";
@@ -19,6 +21,12 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_DESCRIPTION =
   "Comparte tus quejas, sugerencias, ideas y reconocimientos. Seguimos construyendo el futuro de la Universidad Técnica de Machala";
+
+// El logo es opcional: si el archivo no está, la intro simplemente no lo pinta
+// (así nunca aparece una imagen rota).
+const HAS_LOGO = existsSync(
+  path.join(process.cwd(), "public", "utmach-logo.png")
+);
 
 export default async function FormPage({
   searchParams,
@@ -110,7 +118,7 @@ export default async function FormPage({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <FormIntro />
+      <FormIntro hasLogo={HAS_LOGO} />
       <main className="relative isolate flex-1 overflow-hidden bg-[#004a82]">
         <div
           aria-hidden

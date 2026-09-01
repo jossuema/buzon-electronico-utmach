@@ -1,14 +1,17 @@
-# Logo de la UTMACH
+# Logo de la UTMACH (opcional)
 
-La animación de apertura del formulario y otros componentes pueden mostrar el
-logo institucional. Para activarlo, guarda el PNG del logo aquí con este nombre:
+La animación de apertura del formulario muestra el logo institucional **si el
+archivo existe**. Para activarlo, guarda el PNG aquí con este nombre exacto:
 
     public/utmach-logo.png
 
-- Recomendado: versión horizontal (sello + "UTMACH") con **fondo transparente**
-  o fondo blanco (en la animación se muestra dentro de una tarjeta blanca, así
-  que un fondo blanco también queda bien).
-- Tamaño sugerido: alto ≥ 80 px (se escala automáticamente).
+Luego haz commit y push: el despliegue lo incluirá en la imagen y el logo
+aparecerá automáticamente dentro de una tarjeta blanca sobre el fondo azul.
 
-Si el archivo no existe, la interfaz simplemente **omite el logo** sin romperse
-(carga elegante mediante `onError`).
+- Recomendado: versión horizontal (sello + "UTMACH"), fondo transparente o blanco.
+- Alto sugerido: ≥ 80 px (se escala solo).
+
+Si el archivo NO está, la intro simplemente **omite el logo** y muestra solo la
+frase: nunca aparece una imagen rota. La comprobación se hace en el servidor al
+arrancar la aplicación, así que el archivo debe estar presente **antes** del
+despliegue.
