@@ -100,7 +100,6 @@ model Submission {
   career       Career?         @relation(fields: [careerId], references: [id])
   campusId     String?
   campus       Campus?         @relation(fields: [campusId], references: [id])
-  title        String
   description  String
   priority     Priority        @default(MEDIA)
   contactEmail String? // opcional → habilita el envío anónimo

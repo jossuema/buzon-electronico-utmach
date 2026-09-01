@@ -3,12 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, X } from "lucide-react";
 
-import {
-  PRIORITIES,
-  PRIORITY_LABELS,
-  SUBMISSION_TYPES,
-  SUBMISSION_TYPE_LABELS,
-} from "@/lib/constants";
+import { SUBMISSION_TYPES, SUBMISSION_TYPE_LABELS } from "@/lib/constants";
 import type { FacultyOption } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +48,7 @@ export function SubmissionFilters({
           <Label className="text-xs">Buscar</Label>
           <Input
             defaultValue={get("q")}
-            placeholder="Título o descripción"
+            placeholder="Buscar en el texto del aporte"
             onKeyDown={(e) => {
               if (e.key === "Enter")
                 setParam("q", (e.target as HTMLInputElement).value);
@@ -68,16 +63,6 @@ export function SubmissionFilters({
           options={SUBMISSION_TYPES.map((t) => ({
             value: t,
             label: SUBMISSION_TYPE_LABELS[t],
-          }))}
-        />
-
-        <FilterSelect
-          label="Prioridad"
-          value={get("priority")}
-          onChange={(v) => setParam("priority", v)}
-          options={PRIORITIES.map((p) => ({
-            value: p,
-            label: PRIORITY_LABELS[p],
           }))}
         />
 

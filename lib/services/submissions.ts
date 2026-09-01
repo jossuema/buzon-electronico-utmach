@@ -9,7 +9,6 @@ export function buildWhere(
   const where: Prisma.SubmissionWhereInput = {};
 
   if (filters.type) where.type = filters.type;
-  if (filters.priority) where.priority = filters.priority;
   if (filters.facultyId) where.facultyId = filters.facultyId;
   if (filters.careerId) where.careerId = filters.careerId;
 
@@ -25,10 +24,7 @@ export function buildWhere(
   }
 
   if (filters.q) {
-    where.OR = [
-      { title: { contains: filters.q, mode: "insensitive" } },
-      { description: { contains: filters.q, mode: "insensitive" } },
-    ];
+    where.description = { contains: filters.q, mode: "insensitive" };
   }
 
   return where;
@@ -37,8 +33,7 @@ export function buildWhere(
 const listSelect = {
   id: true,
   type: true,
-  title: true,
-  priority: true,
+  description: true,
   contactEmail: true,
   createdAt: true,
   faculty: { select: { name: true } },

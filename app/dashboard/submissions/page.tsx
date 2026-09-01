@@ -4,11 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { submissionFiltersSchema } from "@/lib/validations/submission";
 import { getSubmissions } from "@/lib/services/submissions";
 import { SubmissionFilters } from "@/components/dashboard/submission-filters";
-import {
-  PRIORITY_COLORS,
-  PRIORITY_LABELS,
-  SUBMISSION_TYPE_LABELS,
-} from "@/lib/constants";
+import { SUBMISSION_TYPE_LABELS } from "@/lib/constants";
 import {
   Table,
   TableBody,
@@ -72,18 +68,17 @@ export default async function SubmissionsPage({
             <TableRow>
               <TableHead>Fecha</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Título</TableHead>
+              <TableHead>Aporte</TableHead>
               <TableHead>Facultad</TableHead>
               <TableHead>Carrera</TableHead>
               <TableHead>Campus</TableHead>
-              <TableHead>Prioridad</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={6}
                   className="py-10 text-center text-muted-foreground"
                 >
                   No hay aportes que coincidan con los filtros.
@@ -100,8 +95,10 @@ export default async function SubmissionsPage({
                       {SUBMISSION_TYPE_LABELS[r.type]}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-xs">
-                    <span className="font-medium">{r.title}</span>
+                  <TableCell className="max-w-sm">
+                    <span className="line-clamp-2 font-medium" title={r.description}>
+                      {r.description}
+                    </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {r.faculty?.name ?? "—"}
@@ -111,13 +108,6 @@ export default async function SubmissionsPage({
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {r.campus?.name ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${PRIORITY_COLORS[r.priority]}`}
-                    >
-                      {PRIORITY_LABELS[r.priority]}
-                    </span>
                   </TableCell>
                 </TableRow>
               ))

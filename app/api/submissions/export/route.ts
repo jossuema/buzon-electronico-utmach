@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { submissionFiltersSchema } from "@/lib/validations/submission";
 import { getSubmissionsForExport } from "@/lib/services/submissions";
-import {
-  PRIORITY_LABELS,
-  SUBMISSION_TYPE_LABELS,
-} from "@/lib/constants";
+import { SUBMISSION_TYPE_LABELS } from "@/lib/constants";
 
 // Escapa un valor para CSV (comillas y separadores) y neutraliza la inyección
 // de fórmulas: si el texto empieza con un carácter peligroso (= + - @ TAB CR),
@@ -33,11 +30,10 @@ export async function GET(req: NextRequest) {
     "ID",
     "Fecha",
     "Tipo",
-    "Título",
-    "Prioridad",
     "Facultad",
     "Carrera",
     "Campus",
+    "Aporte",
     "Correo de contacto",
   ];
 
@@ -46,11 +42,10 @@ export async function GET(req: NextRequest) {
       r.id,
       r.createdAt.toISOString(),
       SUBMISSION_TYPE_LABELS[r.type],
-      r.title,
-      PRIORITY_LABELS[r.priority],
       r.faculty?.name ?? "",
       r.career?.name ?? "",
       r.campus?.name ?? "",
+      r.description,
       r.contactEmail ?? "",
     ]
       .map(csvCell)

@@ -7,19 +7,17 @@ export const createSubmissionSchema = z.object({
   type: z.nativeEnum(SubmissionType, {
     required_error: "Selecciona el tipo de aporte",
   }),
-  facultyId: z.string().cuid().optional().nullable(),
-  careerId: z.string().cuid().optional().nullable(),
-  campusId: z.string().cuid().optional().nullable(),
-  title: z
-    .string()
-    .trim()
-    .min(5, "El título debe tener al menos 5 caracteres")
-    .max(150, "El título no puede superar 150 caracteres"),
+  // Obligatorios: sostienen toda la analítica por facultad/carrera/campus.
+  facultyId: z.string().min(1, "Selecciona tu facultad"),
+  careerId: z.string().min(1, "Selecciona tu carrera"),
+  // El campus lo resuelve el servidor: si la carrera tiene uno solo lo
+  // asigna automáticamente; si tiene varios, exige que venga elegido.
+  campusId: z.string().optional(),
   description: z
     .string()
     .trim()
-    .min(10, "La descripción debe tener al menos 10 caracteres")
-    .max(5000, "La descripción no puede superar 5000 caracteres"),
+    .min(15, "Cuéntanos un poco más (mínimo 15 caracteres)")
+    .max(5000, "El texto no puede superar 5000 caracteres"),
   priority: z.nativeEnum(Priority).default(Priority.MEDIA),
   contactEmail: z
     .string()
@@ -37,7 +35,6 @@ export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
 // Filtros del dashboard (query params de la tabla de aportes).
 export const submissionFiltersSchema = z.object({
   type: z.nativeEnum(SubmissionType).optional(),
-  priority: z.nativeEnum(Priority).optional(),
   facultyId: z.string().optional(),
   careerId: z.string().optional(),
   from: z.string().optional(),

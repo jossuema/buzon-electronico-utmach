@@ -7,6 +7,7 @@ import {
 } from "@/lib/validations/submission";
 import { getClientIp } from "@/lib/request";
 import { rateLimit } from "@/lib/rate-limit";
+import { resolveCampus } from "@/lib/hierarchy";
 
 export type SubmissionActionResult =
   | { ok: true; id: string }
@@ -48,33 +49,46 @@ export async function createSubmission(
   const contactEmail =
     data.isAnonymous || !data.contactEmail ? null : data.contactEmail;
 
-  // Resuelve el campus respetando la jerarquía carrera → campus:
-  // - si la carrera tiene un solo campus, se asigna automáticamente;
-  // - si tiene varios, solo se acepta un campusId que pertenezca a la carrera.
-  let campusId: string | null = null;
-  if (data.careerId) {
-    const links = await prisma.careerCampus.findMany({
-      where: { careerId: data.careerId },
-      select: { campusId: true },
-    });
-    if (links.length === 1) {
-      campusId = links[0].campusId;
-    } else if (
-      data.campusId &&
-      links.some((l) => l.campusId === data.campusId)
-    ) {
-      campusId = data.campusId;
-    }
+  // Valida la jerarquía Facultad → Carrera → Campus contra la base de datos.
+  // La CARRERA es la fuente de verdad: de ella se deriva la facultad, así que
+  // es imposible guardar una combinación incoherente aunque el cliente la envíe.
+  const career = await prisma.career.findFirst({
+    where: { id: data.careerId, active: true },
+    select: {
+      id: true,
+      facultyId: true,
+      campuses: {
+        where: { campus: { active: true } },
+        select: { campusId: true },
+      },
+    },
+  });
+  if (!career) {
+    return { ok: false, error: "La carrera seleccionada no es válida." };
   }
+
+  const campus = resolveCampus(
+    career.campuses.map((c) => c.campusId),
+    data.campusId
+  );
+  if (campus.kind === "none") {
+    return {
+      ok: false,
+      error: "Esta carrera no tiene campus configurado. Avisa a la administración.",
+    };
+  }
+  if (campus.kind === "pending") {
+    return { ok: false, error: "Selecciona el campus." };
+  }
+  const campusId = campus.campusId;
 
   try {
     const submission = await prisma.submission.create({
       data: {
         type: data.type,
-        facultyId: data.facultyId || null,
-        careerId: data.careerId || null,
+        facultyId: career.facultyId, // derivada de la carrera (autoritativa)
+        careerId: career.id,
         campusId,
-        title: data.title,
         description: data.description,
         priority: data.priority,
         contactEmail,

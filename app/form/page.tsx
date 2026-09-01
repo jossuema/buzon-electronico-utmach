@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { SiteFooter } from "@/components/site-footer";
 import { SubmissionForm } from "@/components/form/submission-form";
 import { FormIntro } from "@/components/form/form-intro";
+import { firstParam, isTruthy, normalizeSlug, resolveCampus } from "@/lib/hierarchy";
 import type {
   CampusOption,
   CareerOption,
@@ -13,18 +14,11 @@ import { SubmissionType } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Enviar aporte" };
 
+// Los parámetros del QR no deben cachearse entre escaneos distintos.
+export const dynamic = "force-dynamic";
+
 const DEFAULT_DESCRIPTION =
   "Comparte tus quejas, sugerencias, ideas y reconocimientos. Seguimos construyendo el futuro de la Universidad Técnica de Machala";
-
-// Normaliza un query param que puede venir como string | string[] | undefined.
-function param(v: string | string[] | undefined): string | undefined {
-  if (Array.isArray(v)) return v[0];
-  return v;
-}
-
-function isTruthy(v: string | undefined): boolean {
-  return v === "true" || v === "1";
-}
 
 export default async function FormPage({
   searchParams,
@@ -33,12 +27,12 @@ export default async function FormPage({
 }) {
   const sp = await searchParams;
 
-  const facultySlug = param(sp.faculty);
-  const careerSlug = param(sp.career);
-  const campusSlug = param(sp.campus);
-  const typeParam = param(sp.type)?.toUpperCase();
+  const facultySlug = normalizeSlug(sp.faculty);
+  const careerSlug = normalizeSlug(sp.career);
+  const campusSlug = normalizeSlug(sp.campus);
+  // El tipo es un enum (admite "_"), así que no pasa por normalizeSlug.
+  const typeParam = firstParam(sp.type)?.trim().toUpperCase();
 
-  // Datos base para los selectores.
   const [faculties, globalConfig] = await Promise.all([
     prisma.faculty.findMany({
       where: { active: true },
@@ -50,8 +44,8 @@ export default async function FormPage({
     }),
   ]);
 
-  // Resuelve los slugs de la URL a IDs reales, respetando la jerarquía
-  // facultad → carrera → campus.
+  // --- Resolución ESTRICTAMENTE DESCENDENTE facultad → carrera → campus.
+  // Si un nivel no resuelve, los inferiores se descartan por completo.
   let facultyId: string | undefined;
   let careerId: string | undefined;
   let campusId: string | undefined;
@@ -62,33 +56,35 @@ export default async function FormPage({
     const faculty = faculties.find((f) => f.slug === facultySlug);
     if (faculty) {
       facultyId = faculty.id;
-      // Precarga las carreras de esa facultad (sin recargar en el cliente).
-      const careers = await prisma.career.findMany({
+      initialCareers = await prisma.career.findMany({
         where: { facultyId: faculty.id, active: true },
         orderBy: { name: "asc" },
         select: { id: true, name: true, slug: true, facultyId: true },
       });
-      initialCareers = careers;
 
       if (careerSlug) {
-        const career = careers.find((c) => c.slug === careerSlug);
-        careerId = career?.id;
+        // La carrera debe pertenecer a ESA facultad; si no, se ignora.
+        const career = initialCareers.find((c) => c.slug === careerSlug);
+        if (career) {
+          careerId = career.id;
 
-        if (careerId) {
-          // Campus de la carrera seleccionada.
           const links = await prisma.careerCampus.findMany({
-            where: { careerId, campus: { active: true } },
+            where: { careerId: career.id, campus: { active: true } },
             orderBy: { campus: { name: "asc" } },
             select: { campus: { select: { id: true, name: true, slug: true } } },
           });
           initialCampuses = links.map((l) => l.campus);
 
-          if (initialCampuses.length === 1) {
-            // Un solo campus → se asigna automáticamente (no se muestra combo).
-            campusId = initialCampuses[0].id;
-          } else if (campusSlug) {
-            // Varios campus → solo se acepta uno que pertenezca a la carrera.
-            campusId = initialCampuses.find((c) => c.slug === campusSlug)?.id;
+          // El slug de campus solo se acepta si pertenece a la carrera.
+          const requestedId = campusSlug
+            ? initialCampuses.find((c) => c.slug === campusSlug)?.id
+            : undefined;
+          const resolved = resolveCampus(
+            initialCampuses.map((c) => c.id),
+            requestedId
+          );
+          if (resolved.kind === "single" || resolved.kind === "chosen") {
+            campusId = resolved.campusId;
           }
         }
       }
@@ -100,22 +96,22 @@ export default async function FormPage({
       ? (typeParam as SubmissionType)
       : undefined;
 
+  // Un campo solo puede ocultarse si su valor SÍ se resolvió; de lo contrario
+  // el QR generaría un formulario imposible de enviar (campos obligatorios).
   const params: FormParams = {
     facultyId,
     careerId,
     campusId,
-    hideFaculty: isTruthy(param(sp.hideFaculty)),
-    hideCareer: isTruthy(param(sp.hideCareer)),
-    readonly: isTruthy(param(sp.readonly)),
+    hideFaculty: isTruthy(sp.hideFaculty) && !!facultyId,
+    hideCareer: isTruthy(sp.hideCareer) && !!careerId,
+    readonly: isTruthy(sp.readonly),
     type,
   };
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Animación de apertura a nivel raíz para cubrir toda la pantalla. */}
       <FormIntro />
       <main className="relative isolate flex-1 overflow-hidden bg-[#004a82]">
-        {/* Capas del fondo azul institucional */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,#005ca2_0%,#005ca2_28%,#004a82_100%)]"
@@ -129,16 +125,16 @@ export default async function FormPage({
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[2px] bg-[#C2354A]/70"
         />
 
-        <div className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
-          <div className="mb-8 text-center motion-safe:animate-fade-in-up">
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 shadow-sm backdrop-blur">
+        <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
+          <div className="mb-6 text-center motion-safe:animate-fade-in-up">
+            <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 shadow-sm backdrop-blur">
               <span className="flex h-2 w-2 rounded-full bg-[#53aae1]" />
               Participación estudiantil
             </span>
-            <h1 className="text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h1 className="text-balance text-2xl font-bold tracking-tight text-white sm:text-4xl">
               {globalConfig?.title ?? "Buzón Inteligente UTMACH"}
             </h1>
-            <p className="mx-auto mt-3 max-w-xl text-pretty text-white/90">
+            <p className="mx-auto mt-2 max-w-xl text-pretty text-sm text-white/90 sm:text-base">
               {globalConfig?.description ?? DEFAULT_DESCRIPTION}
             </p>
           </div>
