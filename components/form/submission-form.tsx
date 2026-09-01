@@ -292,13 +292,13 @@ export function SubmissionForm({
           label="Cuéntanos qué pasó"
           error={errors.description?.message}
           required
-          hint="Describe la situación con el mayor detalle posible."
+          hint="Mientras más detalles incluyas, mejor podremos atenderlo."
         >
           <Textarea
             id="description"
             rows={6}
             className="text-base sm:text-sm"
-            placeholder="Ej.: En el laboratorio 3 no funcionan los enchufes desde hace dos semanas y no podemos conectar las laptops…"
+            placeholder="Escribe aquí tu aporte. Detalla qué sucede, dónde y desde cuándo."
             aria-invalid={errors.description ? true : undefined}
             aria-describedby={
               errors.description ? "description-error" : "description-hint"
@@ -410,9 +410,6 @@ export function SubmissionForm({
             >
               <MapPin className="h-4 w-4 shrink-0 text-primary" />
               <span className="font-medium">{singleCampus.name}</span>
-              <span className="ml-auto text-xs text-muted-foreground">
-                Único campus de esta carrera
-              </span>
             </div>
           ) : (
             <Controller
