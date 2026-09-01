@@ -25,7 +25,7 @@ const DEFAULT_DESCRIPTION =
 // El logo es opcional: si el archivo no está, la intro simplemente no lo pinta
 // (así nunca aparece una imagen rota).
 const HAS_LOGO = existsSync(
-  path.join(process.cwd(), "public", "utmach-logo.png")
+  path.join(process.cwd(), "public", "utmach-sello.png")
 );
 
 export default async function FormPage({

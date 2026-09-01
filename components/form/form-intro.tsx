@@ -17,7 +17,7 @@ const EXIT_MS = 500; // duración de la cortina de salida
  * - Las líneas entran cruzándose a velocidad desde lados alternos sobre un
  *   fondo de texto en marquee que corre en direcciones opuestas.
  * - La palabra FUTURO se resalta con un "pop" y color de acento celeste.
- * - El logo de la UTMACH se incluye si existe /utmach-logo.png (carga elegante).
+ * - El sello de la UTMACH se incluye si existe /utmach-sello.png.
  * - Se muestra en CADA carga de la página; se cierra con un toque o una tecla.
  * - Con prefers-reduced-motion sigue apareciendo, pero sin movimiento.
  */
@@ -114,13 +114,13 @@ export function FormIntro({ hasLogo = false }: { hasLogo?: boolean }) {
       <div className="relative flex flex-col items-center gap-6">
         {/* Logo UTMACH (si existe /utmach-logo.png) */}
         {logoOk && (
-          <div className="motion-safe:animate-intro-rise rounded-xl bg-white px-4 py-2 shadow-lg">
+          <div className="motion-safe:animate-intro-rise flex h-28 w-28 items-center justify-center rounded-full bg-white p-2.5 shadow-[0_10px_30px_-8px_rgba(0,40,74,0.6)] ring-1 ring-white/50 sm:h-32 sm:w-32">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={logoRef}
-              src="/utmach-logo.png"
+              src="/utmach-sello.png"
               alt="Universidad Técnica de Machala"
-              className="h-9 w-auto sm:h-10"
+              className="h-full w-full object-contain"
               onError={() => setLogoOk(false)}
             />
           </div>
