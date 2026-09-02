@@ -6,6 +6,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { SubmissionForm } from "@/components/form/submission-form";
 import { FormIntro } from "@/components/form/form-intro";
 import { firstParam, isTruthy, normalizeSlug, resolveCampus } from "@/lib/hierarchy";
+import {
+  TURNSTILE_ACTION,
+  turnstileSiteKey,
+  turnstileStatus,
+} from "@/lib/turnstile";
 import type {
   CampusOption,
   CareerOption,
@@ -152,6 +157,10 @@ export default async function FormPage({
             initialCampuses={initialCampuses}
             params={params}
             allowAnonymous={globalConfig?.allowAnonymous ?? true}
+            turnstileSiteKey={
+              turnstileStatus() === "on" ? turnstileSiteKey() : null
+            }
+            turnstileAction={TURNSTILE_ACTION}
           />
         </div>
       </main>

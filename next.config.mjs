@@ -6,6 +6,8 @@ const isDev = process.env.NODE_ENV !== "production";
 // lo mínimo para que funcionen el HMR y el eval de Next.
 // Nota: next/font auto-hospeda las fuentes (no hay dominios externos), Recharts
 // renderiza SVG inline y React Query solo llama a /api (mismo origen).
+const TURNSTILE_ORIGIN = "https://challenges.cloudflare.com";
+
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -14,7 +16,10 @@ const csp = [
   "frame-ancestors 'none'",
   "img-src 'self' data:",
   "object-src 'none'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  // challenges.cloudflare.com: script e iframe del widget de Turnstile.
+  // Sin frame-src el iframe caería en default-src 'self' y quedaría bloqueado.
+  `script-src 'self' 'unsafe-inline' ${TURNSTILE_ORIGIN}${isDev ? " 'unsafe-eval'" : ""}`,
+  `frame-src ${TURNSTILE_ORIGIN}`,
   "style-src 'self' 'unsafe-inline'",
   `connect-src 'self'${isDev ? " ws:" : ""}`,
   ...(isDev ? [] : ["upgrade-insecure-requests"]),

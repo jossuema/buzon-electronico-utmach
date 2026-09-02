@@ -10,6 +10,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { resolveCampus } from "@/lib/hierarchy";
 import { checkEcuadorOnly } from "@/lib/geo";
 import { checkSubmissionGuards, recordSubmission } from "@/lib/guard";
+import { turnstileStatus, verifyTurnstile } from "@/lib/turnstile";
 
 export type SubmissionActionResult =
   | { ok: true; id: string }
@@ -55,6 +56,29 @@ export async function createSubmission(
       ok: false,
       error: "Este buzón solo admite envíos desde Ecuador.",
     };
+  }
+
+  // Cloudflare Turnstile. Va ANTES de tocar la base de datos para que un bot
+  // no consuma consultas, y después del filtro geográfico porque siteverify
+  // cuesta una llamada de red.
+  const turnstile = turnstileStatus();
+  if (turnstile === "misconfigured") {
+    // Configuración a medias: se falla cerrado. Es preferible un formulario
+    // caído y ruidoso a uno que parece protegido y no lo está.
+    console.error(
+      "Turnstile mal configurado: hacen falta TURNSTILE_SITE_KEY, " +
+        "TURNSTILE_SECRET y TURNSTILE_HOSTNAMES. Se rechazan los envíos."
+    );
+    return {
+      ok: false,
+      error: "El formulario no está disponible ahora mismo. Inténtalo más tarde.",
+    };
+  }
+  if (turnstile === "on") {
+    const verdict = await verifyTurnstile(data.turnstileToken, ip);
+    if (!verdict.ok) {
+      return { ok: false, error: verdict.error };
+    }
   }
 
   // Límites persistentes por dispositivo, red y contenido duplicado.

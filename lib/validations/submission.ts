@@ -28,6 +28,9 @@ export const createSubmissionSchema = z.object({
   isAnonymous: z.boolean().default(false),
   // Honeypot anti-bot: campo oculto que un humano nunca debe llenar.
   website: z.string().optional(),
+  // Token de Cloudflare Turnstile. Lo aporta el widget en el cliente y lo
+  // valida el servidor contra siteverify; nunca se guarda.
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;

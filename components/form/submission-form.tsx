@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TurnstileWidget } from "@/components/form/turnstile-widget";
 import {
   Select,
   SelectContent,
@@ -65,6 +66,9 @@ interface Props {
   initialCampuses: CampusOption[];
   params: FormParams;
   allowAnonymous: boolean;
+  /** Clave pública de Turnstile. Si es null, la verificación está apagada. */
+  turnstileSiteKey: string | null;
+  turnstileAction: string;
 }
 
 export function SubmissionForm({
@@ -73,9 +77,13 @@ export function SubmissionForm({
   initialCampuses,
   params,
   allowAnonymous,
+  turnstileSiteKey,
+  turnstileAction,
 }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const resetTurnstile = useRef<(() => void) | null>(null);
   const radioName = useId();
 
   const {
@@ -160,12 +168,30 @@ export function SubmissionForm({
       return;
     }
     setServerError(null);
-    const result = await createSubmission(values);
-    if (result.ok) {
-      setSubmitted(true);
-      reset();
-    } else {
-      setServerError(result.error);
+    try {
+      const result = await createSubmission({
+        ...values,
+        turnstileToken: turnstileToken || undefined,
+      });
+      if (result.ok) {
+        setSubmitted(true);
+        reset();
+      } else {
+        setServerError(result.error);
+      }
+    } catch (err) {
+      // La Server Action puede RECHAZARSE, no solo devolver {ok:false}: un 502
+      // mientras el contenedor reinicia, un corte de red a mitad del POST o un
+      // fallo de base de datos. Sin este catch el estudiante no veía nada y no
+      // podía saber si su aporte se guardó.
+      console.error("Error al enviar el aporte:", err);
+      setServerError(
+        "No se pudo enviar el aporte. Revisa tu conexión e inténtalo de nuevo."
+      );
+    } finally {
+      // El token es de un solo uso y siteverify acaba de gastarlo, así que hay
+      // que pedir uno nuevo tanto si el envío salió bien como si falló.
+      resetTurnstile.current?.();
     }
   }
 
@@ -516,11 +542,20 @@ export function SubmissionForm({
           . No incluyas datos personales de terceros.
         </p>
 
+        {turnstileSiteKey && (
+          <TurnstileWidget
+            siteKey={turnstileSiteKey}
+            action={turnstileAction}
+            onToken={setTurnstileToken}
+            resetRef={resetTurnstile}
+          />
+        )}
+
         <Button
           type="submit"
           size="lg"
           className="w-full"
-          disabled={isSubmitting}
+          disabled={isSubmitting || (!!turnstileSiteKey && !turnstileToken)}
         >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
