@@ -39,8 +39,18 @@ export async function createSubmission(
 
   const ip = await getClientIp();
 
-  // Cortafuegos rápido en memoria (barato, frena ráfagas antes de tocar la BD).
-  const burst = rateLimit(`submit:${ip}`, 10, 10 * 60 * 1000);
+  // Cortafuegos rápido en memoria: barato, frena una inundación antes de tocar
+  // la base de datos.
+  //
+  // El valor es deliberadamente enorme. Estaba en 10 cada 10 minutos POR IP, y
+  // como el WiFi del campus saca a miles de estudiantes por una sola IP pública
+  // (y las operadoras usan CGNAT), en la práctica limitaba a toda la
+  // universidad a 10 aportes cada 10 minutos: se habría autobloqueado en la
+  // primera hora del lanzamiento. Quien pone el límite por persona es la cookie
+  // de dispositivo en lib/guard.ts, respaldada por Turnstile; esto solo existe
+  // para que una inundación no llegue a la base de datos, y por eso se queda
+  // por debajo del techo persistente por hora sin llegar a estorbar nunca.
+  const burst = rateLimit(`submit:${ip}`, 600, 10 * 60 * 1000);
   if (!burst.success) {
     return {
       ok: false,

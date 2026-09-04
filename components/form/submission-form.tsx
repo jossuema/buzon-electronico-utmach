@@ -83,6 +83,7 @@ export function SubmissionForm({
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [showErrorSummary, setShowErrorSummary] = useState(false);
   const resetTurnstile = useRef<(() => void) | null>(null);
   const radioName = useId();
 
@@ -158,15 +159,46 @@ export function SubmissionForm({
 
   const singleCampus = campuses.length === 1 ? campuses[0] : null;
 
+  // Nombres tal como los ve el estudiante, para poder decirle qué le falta en
+  // vez de dejarle mirando un botón que no hace nada.
+  const FIELD_LABELS: Record<string, string> = {
+    type: "Tipo de aporte",
+    description: "Cuéntanos qué pasó",
+    facultyId: "Facultad",
+    careerId: "Carrera",
+    campusId: "Campus",
+    contactEmail: "Correo de contacto",
+  };
+  const missingFields = Object.keys(errors)
+    .map((k) => FIELD_LABELS[k])
+    .filter(Boolean);
+
+  // react-hook-form enfoca el primer campo REGISTRADO con error, que no tiene
+  // por qué ser el primero de la pantalla. En un móvil eso puede dejar al
+  // estudiante en mitad del formulario con un error más arriba sin ver. Se
+  // desplaza explícitamente al primer mensaje de error en orden de documento.
+  function scrollToFirstError() {
+    requestAnimationFrame(() => {
+      const first = document.querySelector<HTMLElement>(
+        'form [role="alert"]'
+      );
+      first?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  }
+
   async function onSubmit(values: CreateSubmissionInput) {
     // Si la carrera se imparte en varios campus, elegir uno es obligatorio.
     if (campuses.length > 1 && !values.campusId) {
-      setError("campusId", {
-        type: "manual",
-        message: "Selecciona el campus",
-      });
+      setError(
+        "campusId",
+        { type: "manual", message: "Selecciona el campus" },
+        { shouldFocus: true }
+      );
+      setShowErrorSummary(true);
+      scrollToFirstError();
       return;
     }
+    setShowErrorSummary(false);
     setServerError(null);
     try {
       const result = await createSubmission({
@@ -218,7 +250,10 @@ export function SubmissionForm({
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, () => {
+        setShowErrorSummary(true);
+        scrollToFirstError();
+      })}
       className="overflow-hidden rounded-2xl border border-white/15 bg-card shadow-[0_20px_50px_-12px_rgba(0,40,74,0.45)] ring-1 ring-black/5 motion-safe:animate-fade-in-up"
     >
       <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-primary" />
@@ -356,6 +391,7 @@ export function SubmissionForm({
                     }}
                   >
                     <SelectTrigger
+                      ref={field.ref}
                       id="facultyId"
                       aria-invalid={errors.facultyId ? true : undefined}
                     >
@@ -394,6 +430,7 @@ export function SubmissionForm({
                     }}
                   >
                     <SelectTrigger
+                      ref={field.ref}
                       id="careerId"
                       aria-invalid={errors.careerId ? true : undefined}
                     >
@@ -448,6 +485,7 @@ export function SubmissionForm({
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger
+                    ref={field.ref}
                     id="campusId"
                     aria-invalid={errors.campusId ? true : undefined}
                   >
@@ -519,6 +557,17 @@ export function SubmissionForm({
               Déjalo vacío si prefieres no ser contactado.
             </p>
           </Field>
+        )}
+
+        {showErrorSummary && missingFields.length > 0 && (
+          <p
+            role="alert"
+            className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            Faltan datos por completar:{" "}
+            <strong>{missingFields.join(", ")}</strong>. Los campos pendientes
+            están marcados en rojo más arriba.
+          </p>
         )}
 
         {serverError && (

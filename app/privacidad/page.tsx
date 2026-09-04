@@ -101,8 +101,8 @@ export default function PrivacyPage() {
                     <em>enviar de forma anónima</em>, no se guarda.
                   </li>
                   <li>
-                    <strong>Contenido del aporte</strong>: tipo, título y
-                    descripción que tú redactas.
+                    <strong>Contenido del aporte</strong>: tipo y descripción
+                    que tú redactas.
                   </li>
                   <li>
                     <strong>Datos académicos no identificativos</strong>:

@@ -39,9 +39,7 @@ function stripPort(entry: string): string {
  * `x-real-ip` y `x-client-ip` NO se usan como respaldo: se comprobó en
  * producción que Azure los deja pasar sin sanear, así que son falsificables.
  */
-export async function getClientIp(): Promise<string> {
-  const h = await headers();
-  const fwd = h.get("x-forwarded-for");
+export function clientIpFromForwarded(fwd: string | null | undefined): string {
   if (fwd) {
     const parts = fwd.split(",");
     // Se recorre desde el final por si la última entrada viniera vacía.
@@ -51,4 +49,9 @@ export async function getClientIp(): Promise<string> {
     }
   }
   return "unknown";
+}
+
+export async function getClientIp(): Promise<string> {
+  const h = await headers();
+  return clientIpFromForwarded(h.get("x-forwarded-for"));
 }

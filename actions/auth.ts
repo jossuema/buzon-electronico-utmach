@@ -3,7 +3,11 @@
 import { signIn, signOut } from "@/lib/auth";
 import { AuthError } from "next-auth";
 import { getClientIp } from "@/lib/request";
-import { rateLimit } from "@/lib/rate-limit";
+import {
+  LOGIN_MAX_ATTEMPTS,
+  loginKey,
+  rateLimitStatus,
+} from "@/lib/rate-limit";
 
 export type LoginState = { error?: string };
 
@@ -13,9 +17,11 @@ export async function login(
   _prev: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  // Anti fuerza bruta: máximo 8 intentos cada 15 minutos por IP.
+  // El conteo lo hace authorize() en lib/auth.ts, que es el único punto por el
+  // que pasan tanto este formulario como la ruta nativa de Auth.js. Aquí solo
+  // se CONSULTA, sin gastar cupo, para poder decirle al usuario cuánto falta.
   const ip = await getClientIp();
-  const rl = rateLimit(`login:${ip}`, 8, 15 * 60 * 1000);
+  const rl = rateLimitStatus(loginKey(ip), LOGIN_MAX_ATTEMPTS);
   if (!rl.success) {
     const mins = Math.ceil(rl.retryAfterMs / 60000);
     return {

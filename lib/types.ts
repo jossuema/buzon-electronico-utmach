@@ -33,7 +33,11 @@ export interface FormParams {
 export interface DashboardStats {
   total: number;
   byFaculty: { name: string; count: number }[];
+  /** Top 10 para el gráfico. Para contar usa careersWithSubmissions. */
   byCareer: { name: string; count: number }[];
+  /** Conteos completos: los gráficos van recortados, los KPI no deben estarlo. */
+  careersWithSubmissions: number;
+  facultiesWithSubmissions: number;
   byType: { type: string; label: string; count: number }[];
   byPriority: { priority: string; label: string; count: number }[];
   overTime: { date: string; count: number }[];

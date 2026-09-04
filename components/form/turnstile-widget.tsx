@@ -78,14 +78,25 @@ export function TurnstileWidget({ siteKey, action, onToken, resetRef }: Props) {
           setState("ready");
           onTokenRef.current(token);
         },
-        "expired-callback": () => onTokenRef.current(""),
-        "timeout-callback": () => onTokenRef.current(""),
+        // Turnstile relanza el reto solo; se vuelve a "loading" para que el
+        // usuario entienda por qué el botón se deshabilitó otra vez.
+        "expired-callback": () => {
+          setState("loading");
+          onTokenRef.current("");
+        },
+        "timeout-callback": () => {
+          setState("loading");
+          onTokenRef.current("");
+        },
         "error-callback": () => {
           setState("error");
           onTokenRef.current("");
         },
       });
-      setState((s) => (s === "error" ? s : "ready"));
+      // Ojo: NO se pasa a "ready" aquí. Dibujar el widget no es lo mismo que
+      // tener token, y el botón depende del token. Si se marcara listo ahora,
+      // el mensaje desaparecería mientras el reto sigue corriendo y el usuario
+      // vería un botón deshabilitado sin ninguna explicación.
     } catch (err) {
       console.error("Turnstile: no se pudo renderizar el widget", err);
       setState("error");

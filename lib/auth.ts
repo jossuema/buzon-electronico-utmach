@@ -3,6 +3,14 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { authConfig } from "./auth.config";
+import { clientIpFromForwarded } from "./request";
+import {
+  LOGIN_MAX_ATTEMPTS,
+  LOGIN_WINDOW_MS,
+  loginKey,
+  rateLimit,
+  rateLimitStatus,
+} from "./rate-limit";
 
 // Esquema de las credenciales de acceso al dashboard.
 const credentialsSchema = z.object({
@@ -24,9 +32,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Correo", type: "email" },
         password: { label: "Contraseña", type: "password" },
       },
-      authorize: async (raw) => {
+      authorize: async (raw, request) => {
+        // Anti fuerza bruta. Va AQUÍ y no en la Server Action porque Auth.js
+        // atiende también /api/auth/callback/credentials, que llega hasta este
+        // punto sin pasar por la acción: con el límite solo en la acción, ese
+        // camino quedaba abierto a intentos ilimitados.
+        const ip = clientIpFromForwarded(
+          request?.headers?.get?.("x-forwarded-for")
+        );
+        const key = loginKey(ip);
+
+        if (!rateLimitStatus(key, LOGIN_MAX_ATTEMPTS).success) {
+          console.warn("Acceso al panel bloqueado por exceso de intentos.");
+          return null;
+        }
+
         const parsed = credentialsSchema.safeParse(raw);
-        if (!parsed.success) return null;
+        if (!parsed.success) {
+          rateLimit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
+          return null;
+        }
 
         const { email, password } = parsed.data;
         const adminEmail = process.env.ADMIN_EMAIL;
@@ -53,6 +78,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: "admin",
           };
         }
+
+        // Solo se contabilizan los intentos FALLIDOS: si se contaran también
+        // los correctos, el administrador se bloquearía a sí mismo entrando y
+        // saliendo del panel.
+        rateLimit(key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
         return null;
       },
     }),

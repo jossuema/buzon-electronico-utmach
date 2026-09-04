@@ -46,3 +46,34 @@ export function rateLimit(
   b.count += 1;
   return { success: true, remaining: limit - b.count, retryAfterMs: 0 };
 }
+
+// --- Límite de intentos de acceso al panel -----------------------------------
+//
+// Vive aquí, y no en la Server Action, porque Auth.js expone además la ruta
+// nativa /api/auth/callback/credentials, que llega directamente a authorize()
+// sin pasar por la acción. Contar en un solo sitio (authorize) es lo que hace
+// que el límite cubra AMBOS caminos.
+
+export const LOGIN_MAX_ATTEMPTS = 8;
+export const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+export function loginKey(ip: string): string {
+  return `login:${ip}`;
+}
+
+/**
+ * Consulta el estado de una clave SIN registrar un intento.
+ * Permite que la interfaz explique cuánto falta sin gastar cupo, dejando que
+ * sea authorize() el único que cuenta.
+ */
+export function rateLimitStatus(key: string, limit: number): RateLimitResult {
+  const now = Date.now();
+  const b = buckets.get(key);
+  if (!b || b.resetAt <= now) {
+    return { success: true, remaining: limit, retryAfterMs: 0 };
+  }
+  if (b.count >= limit) {
+    return { success: false, remaining: 0, retryAfterMs: b.resetAt - now };
+  }
+  return { success: true, remaining: limit - b.count, retryAfterMs: 0 };
+}

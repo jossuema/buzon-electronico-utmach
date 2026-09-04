@@ -49,13 +49,22 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     }))
     .sort((a, b) => b.count - a.count);
 
-  const byCareer = byCareerRaw
+  const byCareerAll = byCareerRaw
     .map((r) => ({
+      careerId: r.careerId,
       name: r.careerId ? careerName.get(r.careerId) ?? "—" : "Sin carrera",
       count: r._count._all,
     }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+    .sort((a, b) => b.count - a.count);
+
+  // El gráfico solo muestra el top 10, pero los KPI deben contar TODAS. Antes
+  // la tarjeta usaba byCareer.length sobre el array ya recortado, así que se
+  // quedaba congelada en 10 en cuanto 10 carreras recibían un aporte.
+  const byCareer = byCareerAll.slice(0, 10);
+  const careersWithSubmissions = byCareerAll.filter((r) => r.careerId).length;
+  const facultiesWithSubmissions = byFacultyRaw.filter(
+    (r) => r.facultyId
+  ).length;
 
   const byType = byTypeRaw
     .map((r) => ({
@@ -87,6 +96,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     total,
     byFaculty,
     byCareer,
+    careersWithSubmissions,
+    facultiesWithSubmissions,
     byType,
     byPriority,
     overTime,

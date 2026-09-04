@@ -42,12 +42,12 @@ export default async function DashboardPage() {
         <StatCard label="Total de aportes" value={stats.total} icon={Inbox} />
         <StatCard
           label="Facultades con aportes"
-          value={stats.byFaculty.length}
+          value={stats.facultiesWithSubmissions}
           icon={Building2}
         />
         <StatCard
           label="Carreras con aportes"
-          value={stats.byCareer.length}
+          value={stats.careersWithSubmissions}
           icon={GraduationCap}
         />
         <StatCard
