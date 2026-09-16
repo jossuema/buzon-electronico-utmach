@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Inbox, LayoutDashboard, Table2, LogOut, Home } from "lucide-react";
+import { Inbox, LayoutDashboard, Table2, LogOut, Home, MapPin } from "lucide-react";
 import { logout } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
   { href: "/dashboard", label: "Indicadores", icon: LayoutDashboard },
   { href: "/dashboard/submissions", label: "Aportes", icon: Table2 },
+  { href: "/dashboard/lugares", label: "Lugares", icon: MapPin },
 ];
 
 export function DashboardSidebar() {

@@ -11,6 +11,7 @@ export function buildWhere(
   if (filters.type) where.type = filters.type;
   if (filters.facultyId) where.facultyId = filters.facultyId;
   if (filters.careerId) where.careerId = filters.careerId;
+  if (filters.placeId) where.placeId = filters.placeId;
 
   if (filters.from || filters.to) {
     where.createdAt = {};
@@ -39,6 +40,7 @@ const listSelect = {
   faculty: { select: { name: true } },
   career: { select: { name: true } },
   campus: { select: { name: true } },
+  place: { select: { name: true } },
 } satisfies Prisma.SubmissionSelect;
 
 export type SubmissionRow = Prisma.SubmissionGetPayload<{

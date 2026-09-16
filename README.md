@@ -117,7 +117,9 @@ El formulario se personaliza vía query params, ideal para generar **un QR por f
 | `/form?faculty=ingenieria-civil&hideFaculty=true` | Oculta el selector de facultad |
 | `/form?faculty=ingenieria-civil&career=ingenieria-civil&readonly=true` | Bloquea esos campos |
 
-Parámetros: `faculty`, `career`, `campus`, `type`, `hideFaculty`, `hideCareer`, `readonly`. Facultad, carrera y campus se resuelven por **slug** (legible).
+Parámetros: `faculty`, `career`, `campus`, `lugar`, `type`, `hideFaculty`, `hideCareer`, `readonly`. Facultad, carrera y campus se resuelven por **slug** (legible).
+
+`lugar` indica desde qué sitio de la universidad se reporta (un baño, un laboratorio…). Los lugares **no los elige el estudiante**: los crean los administradores en **Panel → Lugares**, que genera el enlace y el QR de cada uno (PNG o SVG). El formulario muestra el lugar como una etiqueta fija. Un lugar desconocido o desactivado se ignora y el formulario funciona igual, para que un QR ya impreso nunca lleve a un error. El identificador del enlace no cambia al renombrar el lugar, y el tipo preseleccionado se configura en el lugar, no en la URL, así que se puede cambiar sin reimprimir.
 
 `type` preselecciona el tipo de aporte: `QUEJA`, `SUGERENCIA`, `PROPUESTA`, `RECONOCIMIENTO` u `OTRO`. Los valores antiguos `IDEA_PROYECTO` e `INVESTIGACION` se traducen a `PROPUESTA`, así que un QR ya impreso con ellos sigue funcionando; cualquier otro valor se ignora.
 

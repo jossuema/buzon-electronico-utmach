@@ -31,6 +31,9 @@ export const createSubmissionSchema = z.object({
   // Token de Cloudflare Turnstile. Lo aporta el widget en el cliente y lo
   // valida el servidor contra siteverify; nunca se guarda.
   turnstileToken: z.string().max(2048).optional(),
+  // Lugar del QR. El servidor lo vuelve a comprobar: si no existe o está
+  // desactivado, el aporte se guarda igual, sin lugar.
+  placeId: z.string().max(64).optional(),
 });
 
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
@@ -40,6 +43,7 @@ export const submissionFiltersSchema = z.object({
   type: z.nativeEnum(SubmissionType).optional(),
   facultyId: z.string().optional(),
   careerId: z.string().optional(),
+  placeId: z.string().max(64).optional(),
   // Se exige que sean fechas reales: un valor basura llegaba hasta
   // `new Date(...)` y hacía fallar la consulta de Prisma con un 500.
   from: z

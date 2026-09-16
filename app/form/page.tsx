@@ -19,6 +19,7 @@ import type {
 } from "@/lib/types";
 import { SubmissionType } from "@prisma/client";
 import { LEGACY_SUBMISSION_TYPES } from "@/lib/constants";
+import { findActivePlace } from "@/lib/places";
 
 export const metadata: Metadata = { title: "Enviar aporte" };
 
@@ -47,7 +48,7 @@ export default async function FormPage({
   // El tipo es un enum (admite "_"), así que no pasa por normalizeSlug.
   const typeParam = firstParam(sp.type)?.trim().toUpperCase();
 
-  const [faculties, globalConfig] = await Promise.all([
+  const [faculties, globalConfig, place] = await Promise.all([
     prisma.faculty.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
@@ -56,6 +57,8 @@ export default async function FormPage({
     prisma.formConfiguration.findFirst({
       where: { facultyId: null, active: true },
     }),
+    // El lugar llega SOLO por la URL (?lugar=), lo definen los administradores.
+    findActivePlace(sp.lugar),
   ]);
 
   // --- Resolución ESTRICTAMENTE DESCENDENTE facultad → carrera → campus.
@@ -108,12 +111,15 @@ export default async function FormPage({
   // Un QR impreso no se puede reimprimir: los valores anteriores a la fusión en
   // PROPUESTA se traducen en vez de ignorarse. Cualquier otro valor
   // desconocido se descarta en silencio y el formulario funciona igual.
-  const type =
+  const typeFromUrl =
     typeParam && typeParam in SubmissionType
       ? (typeParam as SubmissionType)
       : typeParam
         ? LEGACY_SUBMISSION_TYPES[typeParam]
         : undefined;
+  // Un ?type= explícito manda; si no, el tipo por defecto del lugar. Así el
+  // administrador puede cambiarlo sin reimprimir los QR.
+  const type = typeFromUrl ?? place?.defaultType ?? undefined;
 
   // Un campo solo puede ocultarse si su valor SÍ se resolvió; de lo contrario
   // el QR generaría un formulario imposible de enviar (campos obligatorios).
@@ -163,6 +169,7 @@ export default async function FormPage({
             initialCampuses={initialCampuses}
             params={params}
             allowAnonymous={globalConfig?.allowAnonymous ?? true}
+            place={place ? { id: place.id, name: place.name } : null}
             turnstileSiteKey={
               turnstileStatus() === "on" ? turnstileSiteKey() : null
             }

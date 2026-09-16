@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
     "Facultad",
     "Carrera",
     "Campus",
+    "Lugar",
     "Aporte",
     "Correo de contacto",
   ];
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
       r.faculty?.name ?? "",
       r.career?.name ?? "",
       r.campus?.name ?? "",
+      r.place?.name ?? "",
       r.description,
       r.contactEmail ?? "",
     ]

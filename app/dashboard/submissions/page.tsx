@@ -28,12 +28,18 @@ export default async function SubmissionsPage({
   const sp = await searchParams;
   const filters = parseSubmissionFilters(sp);
 
-  const [data, faculties] = await Promise.all([
+  const [data, faculties, places] = await Promise.all([
     getSubmissions(filters),
     prisma.faculty.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true, slug: true },
+    }),
+    // Incluye los desactivados: sus aportes siguen existiendo y hay que poder
+    // filtrarlos.
+    prisma.place.findMany({
+      orderBy: [{ active: "desc" }, { name: "asc" }],
+      select: { id: true, name: true, active: true },
     }),
   ]);
 
@@ -60,7 +66,13 @@ export default async function SubmissionsPage({
         </p>
       </div>
 
-      <SubmissionFilters faculties={faculties as FacultyOption[]} />
+      <SubmissionFilters
+        faculties={faculties as FacultyOption[]}
+        places={places.map((p) => ({
+          id: p.id,
+          name: p.active ? p.name : `${p.name} (inactivo)`,
+        }))}
+      />
 
       <div className="rounded-lg border bg-background">
         <Table>
@@ -72,13 +84,14 @@ export default async function SubmissionsPage({
               <TableHead>Facultad</TableHead>
               <TableHead>Carrera</TableHead>
               <TableHead>Campus</TableHead>
+              <TableHead>Lugar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-10 text-center text-muted-foreground"
                 >
                   No hay aportes que coincidan con los filtros.
@@ -108,6 +121,9 @@ export default async function SubmissionsPage({
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {r.campus?.name ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {r.place?.name ?? "—"}
                   </TableCell>
                 </TableRow>
               ))

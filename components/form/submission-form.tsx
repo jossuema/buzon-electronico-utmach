@@ -68,6 +68,11 @@ interface Props {
   initialCampuses: CampusOption[];
   params: FormParams;
   allowAnonymous: boolean;
+  /**
+   * Lugar del QR (?lugar=). Lo resuelve el servidor contra la lista que
+   * mantienen los administradores; el estudiante nunca lo elige.
+   */
+  place: { id: string; name: string } | null;
   /** Clave pública de Turnstile. Si es null, la verificación está apagada. */
   turnstileSiteKey: string | null;
   turnstileAction: string;
@@ -79,6 +84,7 @@ export function SubmissionForm({
   initialCampuses,
   params,
   allowAnonymous,
+  place,
   turnstileSiteKey,
   turnstileAction,
 }: Props) {
@@ -205,6 +211,7 @@ export function SubmissionForm({
     try {
       const result = await createSubmission({
         ...values,
+        placeId: place?.id,
         turnstileToken: turnstileToken || undefined,
       });
       if (result.ok) {
@@ -275,6 +282,17 @@ export function SubmissionForm({
             {...register("website")}
           />
         </div>
+
+        {/* Lugar del QR: informativo y no editable */}
+        {place && (
+          <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-3 text-sm">
+            <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
+            <p className="min-w-0">
+              <span className="text-muted-foreground">Reportando desde </span>
+              <strong className="font-semibold text-foreground">{place.name}</strong>
+            </p>
+          </div>
+        )}
 
         {/* 1. Tipo de aporte — tarjetas de 1 toque */}
         <Controller
@@ -393,7 +411,11 @@ export function SubmissionForm({
             id="description"
             rows={6}
             className="text-base sm:text-sm"
-            placeholder="Escribe aquí tu aporte. Detalla qué sucede, dónde y desde cuándo."
+            placeholder={
+              place
+                ? "Escribe aquí tu aporte. Detalla qué sucede y desde cuándo."
+                : "Escribe aquí tu aporte. Detalla qué sucede, dónde y desde cuándo."
+            }
             aria-invalid={errors.description ? true : undefined}
             aria-describedby={
               errors.description ? "description-error" : "description-hint"

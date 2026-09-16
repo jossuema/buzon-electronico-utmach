@@ -106,7 +106,9 @@ export default function PrivacyPage() {
                   </li>
                   <li>
                     <strong>Datos académicos no identificativos</strong>:
-                    facultad, carrera y campus.
+                    facultad, carrera y campus. Si llegas escaneando un código QR,
+                    también el lugar de la universidad donde está ese código (por
+                    ejemplo, un baño o un laboratorio).
                   </li>
                   <li>
                     <strong>Fecha de envío</strong> y un indicador técnico del

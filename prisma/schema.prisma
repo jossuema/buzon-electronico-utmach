@@ -103,6 +103,10 @@ model Submission {
   career       Career?         @relation(fields: [careerId], references: [id])
   campusId     String?
   campus       Campus?         @relation(fields: [campusId], references: [id])
+  // Lugar del QR desde el que se envió. Si el lugar se elimina, el aporte se
+  // conserva sin él.
+  placeId      String?
+  place        Place?          @relation(fields: [placeId], references: [id], onDelete: SetNull)
   description  String
   priority     Priority        @default(MEDIA)
   contactEmail String? // opcional → habilita el envío anónimo
@@ -113,9 +117,29 @@ model Submission {
   @@index([facultyId])
   @@index([careerId])
   @@index([campusId])
+  @@index([placeId])
   @@index([type])
   @@index([createdAt])
   @@map("submissions")
+}
+
+// Lugar físico al que apunta un QR (un baño, un laboratorio, la biblioteca).
+// Lo definen los administradores desde el panel: el estudiante nunca lo elige,
+// llega en la URL como ?lugar=<slug>.
+model Place {
+  id          String          @id @default(cuid())
+  name        String
+  // Va impreso dentro de los QR, así que NO cambia al renombrar el lugar.
+  slug        String          @unique
+  // Tipo que se preselecciona al escanear. Vive aquí y no en la URL para poder
+  // cambiarlo sin reimprimir los carteles.
+  defaultType SubmissionType?
+  // Desactivar en vez de borrar: su QR sigue abriendo el formulario, sin lugar.
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  submissions Submission[]
+
+  @@map("places")
 }
 
 // Relación N:M entre Submission y Tag.

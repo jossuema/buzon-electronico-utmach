@@ -134,6 +134,18 @@ export async function createSubmission(
   }
   const campusId = campus.campusId;
 
+  // Lugar del QR. Si lo desactivaron entre que se abrió el formulario y se
+  // envió, o el identificador no existe, el aporte NO se rechaza: se guarda
+  // sin lugar. Un estudiante nunca debe perder lo que escribió por esto.
+  const placeId = data.placeId
+    ? ((
+        await prisma.place.findFirst({
+          where: { id: data.placeId, active: true },
+          select: { id: true },
+        })
+      )?.id ?? null)
+    : null;
+
   try {
     const submission = await prisma.submission.create({
       data: {
@@ -141,6 +153,7 @@ export async function createSubmission(
         facultyId: career.facultyId, // derivada de la carrera (autoritativa)
         careerId: career.id,
         campusId,
+        placeId,
         description: data.description,
         priority: data.priority,
         contactEmail,

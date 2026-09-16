@@ -20,8 +20,10 @@ const ALL = "__all__";
 
 export function SubmissionFilters({
   faculties,
+  places,
 }: {
   faculties: FacultyOption[];
+  places: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,7 +45,7 @@ export function SubmissionFilters({
 
   return (
     <div className="space-y-3 rounded-lg border bg-background p-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Buscar</Label>
           <Input
@@ -71,6 +73,13 @@ export function SubmissionFilters({
           value={get("facultyId")}
           onChange={(v) => setParam("facultyId", v)}
           options={faculties.map((f) => ({ value: f.id, label: f.name }))}
+        />
+
+        <FilterSelect
+          label="Lugar"
+          value={get("placeId")}
+          onChange={(v) => setParam("placeId", v)}
+          options={places.map((p) => ({ value: p.id, label: p.name }))}
         />
 
         <div className="space-y-1.5">
