@@ -1,6 +1,6 @@
 # Buzón Inteligente UTMACH
 
-Plataforma de participación universitaria para la **Universidad Técnica de Machala (UTMACH)**. Permite que estudiantes, docentes y personal administrativo envíen **quejas, sugerencias, ideas de proyectos, propuestas de investigación, problemas detectados y reconocimientos**, y ofrece un **dashboard administrativo** con indicadores, filtros y exportación CSV.
+Plataforma de participación universitaria para la **Universidad Técnica de Machala (UTMACH)**. Permite que los estudiantes envíen **quejas, sugerencias, propuestas y reconocimientos**, y ofrece un **dashboard administrativo** con indicadores, filtros y exportación CSV.
 
 Construido **100% con Next.js (App Router)** — sin backend separado. La lógica de servidor vive en Server Actions y Route Handlers; Prisma habla directamente con PostgreSQL.
 
@@ -117,7 +117,9 @@ El formulario se personaliza vía query params, ideal para generar **un QR por f
 | `/form?faculty=ingenieria-civil&hideFaculty=true` | Oculta el selector de facultad |
 | `/form?faculty=ingenieria-civil&career=ingenieria-civil&readonly=true` | Bloquea esos campos |
 
-Parámetros: `faculty`, `career`, `category`, `type`, `hideFaculty`, `hideCareer`, `readonly`. Se resuelven por **slug** (legible).
+Parámetros: `faculty`, `career`, `campus`, `type`, `hideFaculty`, `hideCareer`, `readonly`. Facultad, carrera y campus se resuelven por **slug** (legible).
+
+`type` preselecciona el tipo de aporte: `QUEJA`, `SUGERENCIA`, `PROPUESTA`, `RECONOCIMIENTO` u `OTRO`. Los valores antiguos `IDEA_PROYECTO` e `INVESTIGACION` se traducen a `PROPUESTA`, así que un QR ya impreso con ellos sigue funcionando; cualquier otro valor se ignora.
 
 Los **dropdowns son dependientes**: al elegir facultad se cargan solo sus carreras (vía React Query). Si la facultad llega en la URL, las carreras se **precargan en el servidor** sin recargar la página.
 

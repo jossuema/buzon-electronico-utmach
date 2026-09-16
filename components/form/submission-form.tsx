@@ -12,7 +12,6 @@ import {
   Loader2,
   MapPin,
   MessageSquareWarning,
-  Microscope,
   Rocket,
   Send,
   type LucideIcon,
@@ -24,7 +23,11 @@ import {
 } from "@/lib/validations/submission";
 import { createSubmission } from "@/actions/submissions";
 import { useCampuses, useCareers } from "@/lib/hooks";
-import { SUBMISSION_TYPES, SUBMISSION_TYPE_LABELS } from "@/lib/constants";
+import {
+  SUBMISSION_TYPES,
+  SUBMISSION_TYPE_DESCRIPTIONS,
+  SUBMISSION_TYPE_LABELS,
+} from "@/lib/constants";
 import { CONTACT_EMAIL_RETENTION_MONTHS } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 import type {
@@ -54,8 +57,7 @@ import {
 const TYPE_ICONS: Record<SubmissionType, LucideIcon> = {
   QUEJA: MessageSquareWarning,
   SUGERENCIA: Lightbulb,
-  IDEA_PROYECTO: Rocket,
-  INVESTIGACION: Microscope,
+  PROPUESTA: Rocket,
   RECONOCIMIENTO: Award,
   OTRO: CircleEllipsis,
 };
@@ -291,10 +293,19 @@ export function SubmissionForm({
                 {SUBMISSION_TYPES.map((t, i) => {
                   const Icon = TYPE_ICONS[t];
                   const selected = field.value === t;
+                  // "Otro" es la opción de reserva: ocupa el ancho sobrante
+                  // (sola en su fila en móvil, junto a "Reconocimiento" en
+                  // 3 columnas) y se lee en horizontal.
+                  const wide = t === "OTRO";
+                  const labelId = `${radioName}-${t}-label`;
+                  const descId = `${radioName}-${t}-desc`;
                   return (
                     <label
                       key={t}
-                      className="relative flex cursor-pointer touch-manipulation select-none"
+                      className={cn(
+                        "relative flex cursor-pointer touch-manipulation select-none",
+                        wide && "col-span-2"
+                      )}
                     >
                       <input
                         type="radio"
@@ -304,14 +315,21 @@ export function SubmissionForm({
                         onChange={() => field.onChange(t)}
                         onBlur={field.onBlur}
                         ref={i === 0 ? field.ref : undefined}
+                        // El nombre accesible es solo la etiqueta; la línea
+                        // de ayuda se anuncia como descripción, para que un
+                        // lector de pantalla no lea todo de corrido.
+                        aria-labelledby={labelId}
                         aria-describedby={
-                          fieldState.error ? "type-error" : undefined
+                          fieldState.error ? `${descId} type-error` : descId
                         }
                         className="peer sr-only"
                       />
                       <span
                         className={cn(
-                          "flex min-h-[84px] w-full flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center",
+                          "flex min-h-[104px] w-full items-center gap-2 rounded-xl border px-2.5 py-3",
+                          wide
+                            ? "flex-row justify-start gap-3 px-4 text-left"
+                            : "flex-col justify-center text-center",
                           "transition-colors duration-150 peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2",
                           selected
                             ? "border-primary bg-primary text-primary-foreground shadow-sm"
@@ -325,8 +343,24 @@ export function SubmissionForm({
                             selected ? "text-primary-foreground" : "text-primary"
                           )}
                         />
-                        <span className="text-balance text-[13px] font-semibold leading-tight sm:text-sm">
-                          {SUBMISSION_TYPE_LABELS[t]}
+                        <span className="flex min-w-0 flex-col gap-1">
+                          <span
+                            id={labelId}
+                            className="text-balance text-[13px] font-semibold leading-tight sm:text-sm"
+                          >
+                            {SUBMISSION_TYPE_LABELS[t]}
+                          </span>
+                          <span
+                            id={descId}
+                            className={cn(
+                              "text-pretty text-[11px] leading-snug sm:text-xs",
+                              selected
+                                ? "text-primary-foreground/85"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            {SUBMISSION_TYPE_DESCRIPTIONS[t]}
+                          </span>
                         </span>
                       </span>
                     </label>

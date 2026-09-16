@@ -4,10 +4,28 @@ import { Priority, SubmissionType } from "@prisma/client";
 export const SUBMISSION_TYPE_LABELS: Record<SubmissionType, string> = {
   QUEJA: "Queja",
   SUGERENCIA: "Sugerencia",
-  IDEA_PROYECTO: "Idea de proyecto",
-  INVESTIGACION: "Investigación",
+  PROPUESTA: "Propuesta",
   RECONOCIMIENTO: "Reconocimiento",
   OTRO: "Otro",
+};
+
+// Una línea bajo cada tarjeta del formulario. Sin ella el estudiante adivina, y
+// una categoría que la gente no sabe elegir deja de ser un dato: estropea los
+// gráficos por tipo y la entrada del futuro NLP. La frontera clave es
+// SUGERENCIA ("que lo hagan") frente a PROPUESTA ("quiero hacerlo").
+export const SUBMISSION_TYPE_DESCRIPTIONS: Record<SubmissionType, string> = {
+  QUEJA: "Algo que no funciona o está mal",
+  SUGERENCIA: "Una mejora que alguien debería hacer",
+  PROPUESTA: "Algo que quieres impulsar o crear",
+  RECONOCIMIENTO: "Algo o alguien que merece destacarse",
+  OTRO: "Lo que no encaje en lo anterior",
+};
+
+// Valores que existieron antes de fusionarse en PROPUESTA. Solo sirven para que
+// un enlace o un QR ya impreso con ?type=IDEA_PROYECTO siga funcionando.
+export const LEGACY_SUBMISSION_TYPES: Record<string, SubmissionType> = {
+  IDEA_PROYECTO: "PROPUESTA",
+  INVESTIGACION: "PROPUESTA",
 };
 
 export const PRIORITY_LABELS: Record<Priority, string> = {

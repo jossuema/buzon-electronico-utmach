@@ -10,12 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Tipo de aporte que puede enviar la comunidad universitaria.
+// Tipo de aporte que puede enviar un estudiante.
+// PROPUESTA sustituye a IDEA_PROYECTO e INVESTIGACION: eran indistinguibles
+// para quien rellena el formulario y ninguna encajaba en un buzón solo para
+// estudiantes. La frontera que queda es clara: SUGERENCIA es "que lo hagan",
+// PROPUESTA es "quiero hacerlo".
 enum SubmissionType {
   QUEJA
   SUGERENCIA
-  IDEA_PROYECTO
-  INVESTIGACION
+  PROPUESTA
   RECONOCIMIENTO
   OTRO
 }

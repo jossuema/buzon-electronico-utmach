@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { submissionFiltersSchema } from "@/lib/validations/submission";
+import { parseSubmissionFilters } from "@/lib/validations/submission";
 import { getSubmissionsForExport } from "@/lib/services/submissions";
 import { SUBMISSION_TYPE_LABELS } from "@/lib/constants";
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const filters = submissionFiltersSchema.parse(
+  const filters = parseSubmissionFilters(
     Object.fromEntries(req.nextUrl.searchParams)
   );
   const rows = await getSubmissionsForExport(filters);

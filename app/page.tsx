@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   MessageSquareWarning,
   Lightbulb,
-  FlaskConical,
+  Rocket,
   Award,
   ArrowRight,
   QrCode,
@@ -15,18 +15,18 @@ import { SiteFooter } from "@/components/site-footer";
 const FEATURES = [
   {
     icon: MessageSquareWarning,
-    title: "Quejas y sugerencias",
-    desc: "Reporta problemas y propón mejoras para tu facultad o carrera.",
+    title: "Quejas",
+    desc: "Reporta lo que no funciona o está mal en tu facultad o carrera.",
   },
   {
     icon: Lightbulb,
-    title: "Ideas de proyectos",
-    desc: "Comparte iniciativas que aporten valor a la comunidad universitaria.",
+    title: "Sugerencias",
+    desc: "Propón mejoras que la universidad debería poner en marcha.",
   },
   {
-    icon: FlaskConical,
-    title: "Investigación",
-    desc: "Presenta propuestas de investigación e innovación académica.",
+    icon: Rocket,
+    title: "Propuestas",
+    desc: "Comparte iniciativas que quieras impulsar, incluidas ideas de investigación.",
   },
   {
     icon: Award,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { submissionFiltersSchema } from "@/lib/validations/submission";
+import { parseSubmissionFilters } from "@/lib/validations/submission";
 import { getSubmissions } from "@/lib/services/submissions";
 import { SubmissionFilters } from "@/components/dashboard/submission-filters";
 import { SUBMISSION_TYPE_LABELS } from "@/lib/constants";
@@ -26,7 +26,7 @@ export default async function SubmissionsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const filters = submissionFiltersSchema.parse(sp);
+  const filters = parseSubmissionFilters(sp);
 
   const [data, faculties] = await Promise.all([
     getSubmissions(filters),
